@@ -1,0 +1,61 @@
+<html>
+<!-- instructor styled template example -->
+<!-- heavy updates as base template & css were a mess -->
+<!-- should have just started from scratch -->
+<head>
+	<link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
+	</head>
+
+	
+	<body>
+	<div class = 'pane'>
+		<div class = 'header'>
+            <h1>{{ category.name }}</h1>
+	    </div>
+
+	<a href = '{{url_for('newitem', category_id = category.id) }}'>Create New Item</a>
+    &nbsp&nbsp|&nbsp&nbsp
+    <a href = '{{url_for('categories') }}'> categories</a>
+
+
+   {% with messages = get_flashed_messages() %}
+      {% if messages %}
+  <div class = 'flash'>        
+        <ul>
+        {% for message in messages %}
+            <li> <strong> {{ message }} </strong> </li>
+        {% endfor %}
+        </ul>
+  </div>
+        {% endif %}
+    {% endwith %}
+
+
+
+
+{% for i in items %}
+	<div class = 'item'>
+        <div class = 'nameAndPrice'>
+            <span class = 'name'>{{i.name}}</span>
+            <span class = 'price'>{{i.price}}</span>
+        </div>	
+    
+        <div class = 'description'>
+            {{i.description}}
+        </div>
+        
+        <div class = "editdeletepane">
+            <a href='{{url_for('edititem',category_id = category.id, item_id=i.id)}}' >Edit</a>
+            <a href='{{url_for('deleteitem', category_id = category.id, item_id=i.id)}}' >
+                Delete</a>
+        </div>
+    </div>
+{% endfor %}
+	
+
+</div>
+
+	</body>
+
+
+</html>

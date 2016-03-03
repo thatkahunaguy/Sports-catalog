@@ -1,0 +1,71 @@
+/* should have done css from scratch vs. starting with template which was a mess */
+/* still lots of unused references, looks like css from soemthing else was grabbed */
+/* and just used for this example without updates or good formatting.  I added */
+/* border statements(now commented) to troubleshoot the layout */
+body            { font-family: sans-serif; color: #97743A;
+                  background-image: url('wood.png'); background-color: #333333}
+h1, h2, h3, h4       { color: #97743A; }
+h1, h2          { font-family: 'Georgia', serif; margin: 0; }
+h1              { border-bottom: 2px solid #eee; }
+h2              { font-size: 1.2em; }
+
+
+a {text-decoration: none; color:#FFFFCC; font-size: .75em;}
+
+.pane {position:absolute; left: 20%; right: 20%; border: 2px solid;
+    border-radius: 25px; padding: 25px; margin: 5px; border-color: #49412C; background-color: #262216 }
+.header         {left:50%; text-align: center;}
+
+.item{
+/*     border: 3px solid green; */
+    margin-top: 20
+    }
+.nameandprice{ 
+    display: block;
+/*     border: 3px solid white; */
+    font-size: 1.2em;
+    }
+.name {
+    width:60%;
+    display: inline-block;
+/*     border: 3px solid red */
+    }
+.price {
+    text-align: right; 
+    width:30%; 
+    display: inline-block; 
+    float: right; 
+/*     border: 3px solid red */
+    }
+
+.description {
+    text-align: left; 
+    width:100%; 
+    color: #B0A18E }
+
+.inline {
+    display: inline-block;
+    }
+
+.center {
+    text-align: center;
+    }
+
+    
+.editdeletepane {
+    text-align: left; 
+    width:100%;}
+
+.flash { 
+    background: #97743A;
+    color:  #262216;
+    padding: 3px 0px;
+    font-size: 1.2em;
+    }
+
+.category {
+    font-size: 2em;
+    padding: 5px;
+    }
+/* remember those css inhertance rules? need to override link style here */    
+.category a { color: #97743A;}

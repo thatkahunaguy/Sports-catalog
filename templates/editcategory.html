@@ -1,0 +1,28 @@
+<html>
+<head>
+	<link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<div class = 'pane'>
+    <div class = 'header'>
+      <h1> Edit category Form. </h1>
+    </div>
+
+<form action="{{url_for('editcategory', category_id=category.id )}}" method = 'POST'>
+<h3> Does the placeholder show: {{ category.name }}?</h3>
+
+<!-- changed from placeholder to value so both fields don't have to be filled -->
+
+
+<label for='name'>Name: </label>
+<input type='text' size='30' name='name' value = '{{ category.name }}'>
+<br>
+
+
+<input type='submit' value='Update'>
+<a href={{ url_for('categories') }}>Cancel</a>
+
+</form>
+</div>
+</body>
+</html>
