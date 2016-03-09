@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 Base = declarative_base()
 
 # define class for a tables
-class category(Base):
+class Category(Base):
     # tell Alchemy the tablename
     __tablename__ = 'category'
     
@@ -27,7 +27,7 @@ class category(Base):
             'id': self.id,
         }
 
-class item(Base):
+class Item(Base):
     __tablename__ = 'item'
     
     # create variables for columns w/appropriate attributes
@@ -36,7 +36,7 @@ class item(Base):
     description = Column(String(250))
     price = Column(String(8))
     category_id = Column(Integer, ForeignKey('category.id'))
-    category = relationship(category)
+    category = relationship(Category)
     
 # We added this serialize function to be able to send JSON objects in a
 # serializable format.  Note that the method/function resides in each class
