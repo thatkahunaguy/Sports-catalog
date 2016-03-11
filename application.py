@@ -1,195 +1,475 @@
-from sqlalchemy import create_engine, func
-from sqlalchemy.orm import sessionmaker
-# allow summary function labeling for reference
-from sqlalchemy.sql import label
- 
-from database_setup import Base, Category, Item
-
-from flask import Flask, render_template, url_for, request, redirect, flash, jsonify
+from flask import Flask, render_template, request, redirect,jsonify, url_for, flash
 app = Flask(__name__)
 
-def session_start(dbase):
-    engine = create_engine(dbase)
-    Base.metadata.bind = engine
-    DBSession = sessionmaker(bind=engine)
-    return DBSession()
+from sqlalchemy import create_engine, asc
+from sqlalchemy.orm import sessionmaker
+from database_setup import Base, Category, Item, User
+
+# New imports to enable logins with Oauth2 session tokens etc
+# we use the as keyword here since we are already using session
+# to describe our database session with sqlalchemy
+from flask import session as login_session
+# these will help generate a pseudo-random string to id each session
+import random, string
+# this is a json method for storing client id and secrets
+from oauth2client.client import flow_from_clientsecrets
+# this method handles errors exchanging 1 time auth codes for access codes
+from oauth2client.client import FlowExchangeError
+#python http client library
+import httplib2
+# converts in memory objects to json objects
+import json
+# converts return value into a response to send to a client
+from flask import make_response
+# Apache urlrequests library - basically an improved urllib2
+import requests
+
+CLIENT_ID = json.loads(
+                open('client_secret.json','r').read())['web']['client_id']
+
+#Connect to Database and create database session
+engine = create_engine('sqlite:///catalog.db')
+Base.metadata.bind = engine
+
+DBSession = sessionmaker(bind=engine)
+session = DBSession()
+
+# verify client response token matches state token sent to client
+# to avoid CSRF - gconnect is the post url we defined in the AJAX within
+# our login template - could have called it something else
+@app.route('/gconnect', methods = ['POST'])
+def gconnect():
+# Validate state token
+    if request.args.get('state') != login_session['state']:
+        response = make_response(json.dumps('Invalid state parameter.'), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    # Obtain authorization code since we know state tokens match
+    code = request.data
+
+    try:        
+        # create an oauth_flow object with our client secret
+        oauth_flow = flow_from_clientsecrets('client_secret.json', scope='')
+        oauth_flow.redirect_uri = 'postmessage'
+        # Exchange the authorization code for a credentials object from Google
+        credentials = oauth_flow.step2_exchange(code)
+    except FlowExchangeError:
+        response = make_response(
+            json.dumps('Failed to exchange for authorization code.'), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    # Check that the access token is valid.
+    access_token = credentials.access_token
+    url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s'
+           % access_token)
+    h = httplib2.Http()
+    # that google url will return an error if invalid & token info otherwise
+    result = json.loads(h.request(url, 'GET')[1])
+    print "**LOGIN RESULT: ", result
+    print "**ACCESS TOKEN: ", credentials.access_token
+    # If there was an error in the access token info, abort.
+    # NOTE: these result.get statements are parsing the json result object
+    if result.get('error') is not None:
+        response = make_response(json.dumps(result.get('error')), 500)
+        response.headers['Content-Type'] = 'application/json'
+
+    # Verify that the access token is used for the intended user.
+    gplus_id = credentials.id_token['sub']
+    if result['user_id'] != gplus_id:
+        response = make_response(
+            json.dumps("Token's user ID doesn't match given user ID."), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # Verify that the access token is valid for this app.
+    if result['issued_to'] != CLIENT_ID:
+        response = make_response(
+            json.dumps("Token's client ID does not match app's."), 401)
+        print "Token's client ID does not match app's."
+        response.headers['Content-Type'] = 'application/json'
+        return response
+        
+    # Store the access token in the session for later use.  A new token is
+    # issued even if the user is already logged in
+    login_session['access_token'] = credentials.access_token
+    # Check to see if the user is already logged in and if so
+    # return a 200 successful message but not reset all the login variables
+    stored_credentials = login_session.get('access_token')
+    stored_gplus_id = login_session.get('gplus_id')
+    if stored_credentials is not None and gplus_id == stored_gplus_id:
+        response = make_response(json.dumps('Current user is already connected.'),
+                                 200)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # Whew! None of the above are true so store relevant info!
+    # Get user info
+    userinfo_url = "https://www.googleapis.com/oauth2/v1/userinfo"
+    params = {'access_token': credentials.access_token, 'alt': 'json'}
+    # store the google api userinfo response as answer
+    answer = requests.get(userinfo_url, params=params)
+    # convert the answer object to json and store as data.  Response defined here:
+    # https://developers.google.com/+/web/api/rest/openidconnect/getOpenIdConnect#http-request
+    data = answer.json()
+    # access the relevant sections of data to store session info
+    login_session['gplus_id'] = gplus_id
+    login_session['username'] = data['name']
+    login_session['picture'] = data['picture']
+    login_session['email'] = data['email']
+    login_session['provider'] = 'google'
     
-# these @ items are decorators which apply to the defined funciton
-# below them (HelloWorld).  In this case the decorators run the 
-# function whenever the url route has the specified string at the end
-# these are defined within Flask
+    # check to see if the user is in the database & if not add a new user
+    user_id = getUserID(login_session['email'])
+    if not user_id:
+        user_id = createUser(login_session)
+    login_session['user_id'] = user_id
+    
+    print "In LOGIN: Login Session Object: ", login_session
+    output = ''
+    output += '<h1>Welcome, '
+    output += login_session['username']
+    output += '!</h1>'
+    output += '<img src="'
+    output += login_session['picture']
+    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+    flash("you are now logged in as %s" % login_session['username'])
+    print "done!"
+    return output
+    
 
-# this adds a JSON endpoint for all the categories
-@app.route('/categories/JSON')
-def categorysJSON():
-    session = session_start('sqlite:///catalog.db')
+@app.route('/fbconnect', methods=['POST'])
+def fbconnect():
+    if request.args.get('state') != login_session['state']:
+        response = make_response(json.dumps('Invalid state parameter.'), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    # get the short term access token
+    # https://developers.facebook.com/docs/facebook-login/access-tokens
+    access_token = request.data
+    print "access token received %s " % access_token
+
+    # convert short term token to a long term token
+    # https://developers.facebook.com/docs/facebook-login/access-tokens/expiration-and-extension
+    app_id = json.loads(open('fb_client_secret.json', 'r').read())[
+        'web']['app_id']
+    app_secret = json.loads(
+        open('fb_client_secret.json', 'r').read())['web']['app_secret']
+    url = 'https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id={}&client_secret={}&fb_exchange_token={}'.format(app_id, app_secret, access_token) 
+    h = httplib2.Http()
+    result = h.request(url, 'GET')[1]
+    # Use token to get user info from API
+    # this doesn't seem to be used
+    # userinfo_url = "https://graph.facebook.com/v2.5/me"
+    # strip expire tag from access token
+    token = result.split("&")[0]
+
+
+    url = 'https://graph.facebook.com/v2.4/me?%s&fields=name,id,email' % token
+    h = httplib2.Http()
+    result = h.request(url, 'GET')[1]
+    # print "url sent for API access:%s"% url
+    # print "API JSON result: %s" % result
+    data = json.loads(result)
+    login_session['provider'] = 'facebook'
+    login_session['username'] = data["name"]
+    login_session['email'] = data["email"]
+    login_session['facebook_id'] = data["id"]
+
+    # The token must be stored in the login_session in order to properly logout, let's strip out the information before the equals sign in our token
+    stored_token = token.split("=")[1]
+    login_session['access_token'] = stored_token
+
+    # Get user picture
+    url = 'https://graph.facebook.com/v2.4/me/picture?%s&redirect=0&height=200&width=200' % token
+    h = httplib2.Http()
+    result = h.request(url, 'GET')[1]
+    data = json.loads(result)
+
+    login_session['picture'] = data["data"]["url"]
+
+    # see if user exists
+    user_id = getUserID(login_session['email'])
+    if not user_id:
+        user_id = createUser(login_session)
+    login_session['user_id'] = user_id
+
+    output = ''
+    output += '<h1>Welcome, '
+    output += login_session['username']
+
+    output += '!</h1>'
+    output += '<img src="'
+    output += login_session['picture']
+    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+
+    flash("Now logged in as %s" % login_session['username'])
+    return output
+
+
+# generic disconnect function rather than individual gdisconnect & fbdisconnect
+@app.route('/disconnect')
+def disconnect():
+    print "In disconnect: Login Session Object: ", login_session
+    access_token = login_session.get('access_token')
+    # return an error if no one is logged in
+    if access_token is None:
+        print 'Access Token is None'
+    	response = make_response(json.dumps('Current user not connected.'), 401)
+    	response.headers['Content-Type'] = 'application/json'
+    	return response
+    # load the url to revoke the access token on Google's servers
+    if 'facebook_id' in login_session:
+        facebook_id = login_session['facebook_id']
+        url = 'https://graph.facebook.com/{}/permissions?access_token={}'.format(facebook_id,access_token)
+        request_type = 'DELETE'
+        # this is the index of the revoke response where the status code is
+        result_index = 0
+    else:
+        # logged in thru google so disconnect there
+        url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
+        request_type = 'GET'
+        result_index = 0
+    h = httplib2.Http()
+    result = h.request(url, request_type)
+    # print loop and indexing result below rather than above for debug
+    for r in result:
+        print "**{} RESULT**: ".format(login_session['provider']), r
+    result = result[result_index]
+    if result['status'] == '200':
+        print "CLEARING THE LOGIN SESSION"
+        login_session.clear()
+        print "Successfully disconnected, YOU ARE LOGGED OUT"
+        flash('Successfully disconnected, YOU ARE LOGGED OUT')
+        return redirect(url_for('showCategories'))
+    else:	
+    	response = make_response(json.dumps('Failed to revoke token for given user.', 400))
+    	response.headers['Content-Type'] = 'application/json'
+    	return response
+
+# Create anti-forgery state token
+# this is a 32 character pseudo-random mix of uppercase characters and digits
+@app.route('/login')
+def showLogin():
+    state = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                    for x in xrange(32))
+    # this random string is store as state for the login session
+    login_session['state'] = state
+# THIS IS THE GOOGLE DOCUMENTATION PYTHON RECOMMENDATION
+# BUT IT REQUIRES THE GOOGLE API PYTHON LIBRARY TO FUNCTION
+# https://developers.google.com/identity/protocols/OpenIDConnect#server-flow
+# Create a state token to prevent request forgery.
+# Store it in the session for later validation.
+#     state = hashlib.sha256(os.urandom(1024)).hexdigest()
+#     session['state'] = state
+# Set the client ID, token state, and application name in the HTML while
+# serving it.
+#     response = make_response(
+#       render_template('index.html',
+#                       CLIENT_ID=CLIENT_ID,
+#                       STATE=state,
+#                       APPLICATION_NAME=APPLICATION_NAME))
+    
+    return render_template('login.html', STATE = login_session['state'])
+
+#JSON APIs to view Category Information
+@app.route('/category/<int:category_id>/item/JSON')
+def catalogJSON(category_id):
+    category = session.query(Category).filter_by(id = category_id).one()
+    items = session.query(Item).filter_by(category_id = category_id).all()
+    return jsonify(Items=[i.serialize for i in items])
+
+
+@app.route('/category/<int:category_id>/item/<int:item_id>/JSON')
+def itemJSON(category_id, item_id):
+    Item = session.query(Item).filter_by(id = item_id).one()
+    return jsonify(Item = Item.serialize)
+
+@app.route('/category/JSON')
+def categoriesJSON():
     categories = session.query(Category).all()
-    session.close()
-    return jsonify(category=[Category.serialize for category in categories])
+    return jsonify(categories= [r.serialize for r in categories])
 
-# this adds a JSON endpoint for the entire item for a category
-@app.route('/categories/<int:category_id>/item/JSON')
-def categoryitemJSON(category_id):
-    session = session_start('sqlite:///catalog.db')
-    category = session.query(Category).filter_by(id=category_id).one()
-    items = session.query(Item).filter_by(
-        category_id=category_id).all()
-    session.close()
-    return jsonify(items=[i.serialize for i in items])
 
-# this adds a JSON endpoint for the one item item for a category
-@app.route('/categories/<int:category_id>/item/<int:item_id>/JSON')
-def itemsJSON(category_id, item_id):
-    session = session_start('sqlite:///catalog.db')
-    items = session.query(Item).filter(Item.id == item_id and 
-        Item.category_id == category_id).one()
-    session.close()
-    return jsonify(items=items.serialize)
+#Show all categories
+@app.route('/')
+@app.route('/category/')
+def showCategories():
+  categories = session.query(Category).order_by(asc(Category.name))
+  print "Category Login Session Object: ", login_session
+  # show the public template if not logged in (no add category option)
+  if 'username' not in login_session:
+      return render_template('publiccategories.html', categories = categories)
+  else:
+      return render_template('categories.html', categories = categories)
 
-# end of JSON endpoints
+#Create a new category
+@app.route('/category/new/', methods=['GET','POST'])
+def newCategory():
+  # redirect if not logged in
+  if 'username' not in login_session: return redirect(url_for('showLogin'))
+  if request.method == 'POST':
+      newCategory = Category(name = request.form['name'],
+          user_id = login_session['user_id'])
+      session.add(newCategory)
+      flash('New Category %s Successfully Created' % newCategory.name)
+      session.commit()
+      return redirect(url_for('showCategories'))
+  else:
+      return render_template('newCategory.html')
 
-@app.route('/')    
-@app.route('/categories')
-def categories():
-    session = session_start('sqlite:///catalog.db')
-    # check only the first category
-    categories = session.query(Category).order_by(Category.name).all()
-    session.close()
-    # changed output to a render template & then template to styled template
-    return render_template('categories.html', categories = categories)
+#Edit a category
+@app.route('/category/<int:category_id>/edit/', methods = ['GET', 'POST'])
+def editCategory(category_id):
+  # redirect if not logged in
+  if 'username' not in login_session: return redirect(url_for('showLogin'))
+  editedCategory = session.query(Category).filter_by(id = category_id).one()
+  # redirect to main page & flash unauthorized if user is not creator
+  if not user_authorized(editedCategory.user_id, "edit"):
+    return redirect(url_for('showCategories'))  
+  if request.method == 'POST':
+      if request.form['name']:
+        editedCategory.name = request.form['name']
+        flash('Category Successfully Edited %s' % editedCategory.name)
+        return redirect(url_for('showCategories'))
+  else:
+    return render_template('editCategory.html', category = editedCategory)
 
-@app.route('/categories/<int:category_id>')    
-@app.route('/categories/<int:category_id>/item')
-def items(category_id):
-    session = session_start('sqlite:///catalog.db')
-    # check only the first category
-    category = session.query(Category).filter_by(id=category_id).first()
-    item = session.query(Item).filter_by(category_id=category_id).all()
-#     output = '<h2>item Items for: {} </h2>'.format(category.name)
-#     for item in item:
-#         output += "<h3>{}   {}</h3> r_id: {} <br>".format(item.name, Item.price, Item.category_id)
-#         output += Item.description
-#         output += '<br>'
-    # once again example code just opens a session in main & never closes it
-    # is this what should be done?
-    session.close()
-    # changed output to a render template & then template to styled template
-    return render_template('item.html', category = category, items = item)
 
-# Task 1: Create route for newitem function here
+#Delete a category
+@app.route('/category/<int:category_id>/delete/', methods = ['GET','POST'])
+def deleteCategory(category_id):
+  # redirect if not logged in
+  if 'username' not in login_session: return redirect(url_for('showLogin'))
+  categoryToDelete = session.query(Category).filter_by(id = category_id).one()
+  # redirect to main page & flash unauthorized if user is not creator
+  if not user_authorized(categoryToDelete.user_id, "delete"):
+    return redirect(url_for('showCategories'))
+  if request.method == 'POST':
+    session.delete(categoryToDelete)
+    flash('%s Successfully Deleted' % categoryToDelete.name)
+    session.commit()
+    return redirect(url_for('showCategories', category_id = category_id))
+  else:
+    return render_template('deleteCategory.html',category = categoryToDelete)
 
-@app.route('/categories/<int:category_id>/item/new', methods = ['GET', 'POST'])
-def newitem(category_id):
+#Show a category item
+@app.route('/category/<int:category_id>/')
+@app.route('/category/<int:category_id>/item/')
+def showItem(category_id):
+    print "Item Login Session Object: ", login_session
+    category = session.query(Category).filter_by(id = category_id).one()
+    items = session.query(Item).filter_by(category_id = category_id).all()
+    creator = getUserInfo(category.user_id)
+    # we use get here since it returns null vs an exception if login_session is empty
+    if login_session.get("user_id") == creator.id:
+        return render_template('item.html', items = items, category = category,
+            creator = creator)
+    else:
+        return render_template('publicitem.html', items = items, category = category,
+            creator = creator)
+     
+
+
+#Create a new item
+@app.route('/category/<int:category_id>/item/new/',methods=['GET','POST'])
+def newItem(category_id):
+  # redirect if not logged in
+  if 'username' not in login_session: return redirect(url_for('showLogin'))
+  category = session.query(Category).filter_by(id = category_id).one()
+  # redirect to main page & flash unauthorized if user is not creator
+  if not user_authorized(category.user_id, "create items"):
+      return redirect(url_for('showCategories'))
+  if request.method == 'POST':
+      newItem = Item(name = request.form['name'],
+          description = request.form['description'], price = request.form['price'],
+          category_id = category_id,
+          user_id = login_session['user_id'])
+      session.add(newItem)
+      session.commit()
+      flash('New Item %s Item Successfully Created' % (newItem.name))
+      return redirect(url_for('showItem', category_id = category_id))
+  else:
+      return render_template('newitem.html', category_id = category_id)
+
+                
+#Edit a item
+@app.route('/category/<int:category_id>/item/<int:item_id>/edit', methods=['GET','POST'])
+def editItem(category_id, item_id):
+    # redirect if not logged in
+    if 'username' not in login_session: return redirect(url_for('showLogin'))  
+    editedItem = session.query(Item).filter_by(id = item_id).one()
+    category = session.query(Category).filter_by(id = category_id).one()
+    # redirect to main page & flash unauthorized if user is not creator
+    if not user_authorized(category.user_id, "edit"):
+        return redirect(url_for('showCategories'))
+                
     if request.method == 'POST':
-        session = session_start('sqlite:///catalog.db')
-        new_item = item(name = request.form['name'], price = request.form['price'],
-            course = request.form['course'], description = request.form['description'],
-            category_id = "{}".format(category_id))
-        # note: sql alchemy generates an error if I try to access the
-        # new_item object after the session
-        # CHORE: should i store name in a variable to so I flash AFTER successful commit?
-        flash('{} added successfully!'.format(new_Item.name))
-        session.add(new_item)
+        if request.form['name']:
+            editedItem.name = request.form['name']
+        if request.form['description']:
+            editedItem.description = request.form['description']
+        if request.form['price']:
+            editedItem.price = request.form['price']
+        if request.form['course']:
+            editedItem.course = request.form['course']
+        session.add(editedItem)
+        session.commit() 
+        flash('Item Successfully Edited')
+        return redirect(url_for('showItem', category_id = category_id))
+    else:
+        return render_template('edititem.html', category_id = category_id, item_id = item_id, item = editedItem)
+
+
+#Delete a item
+@app.route('/category/<int:category_id>/item/<int:item_id>/delete', methods = ['GET','POST'])
+def deleteItem(category_id,item_id):
+    # redirect if not logged in
+    if 'username' not in login_session: return redirect(url_for('showLogin'))
+    category = session.query(Category).filter_by(id = category_id).one()
+    itemToDelete = session.query(Item).filter_by(id = item_id).one() 
+        # redirect to main page & flash unauthorized if user is not creator
+    if not user_authorized(category.user_id, "delete"):
+        return redirect(url_for('showCategories'))
+    if request.method == 'POST':
+        session.delete(itemToDelete)
         session.commit()
-        session.close()
+        flash('Item Successfully Deleted')
+        return redirect(url_for('showItem', category_id = category_id))
+    else:
+        return render_template('deleteItem.html', item = itemToDelete)
+
+def getUserID(email):
+    try:
+        user = session.query(User).filter_by(email = login_session['email']).one()
+        return user.id
+    except:
+        return
         
-        return redirect(url_for('items',category_id = category_id))
-    else:
-        return render_template('newItem.html', category_id = category_id)
-
-@app.route('/categories/new', methods = ['GET', 'POST'])
-def newcategory():
-    if request.method == 'POST':
-        session = session_start('sqlite:///catalog.db')
-        new_category = category(name = request.form['name'])
-        # note: sql alchemy generates an error if I try to access the
-        # new_item object after the session
-        # CHORE: should i store name in a variable to so I flash AFTER successful commit?
-        flash('{} added successfully!'.format(new_Category.name))
-        session.add(new_category)
-        session.commit()
-        session.close()
-        
-        return redirect(url_for('categories'))
-    else:
-        return render_template('newCategory.html')
-
-# Task 2: Create route for edititem function here
-
-@app.route('/categories/<int:category_id>/item/<int:item_id>/edit', methods = ['GET', 'POST'])
-def edititem(category_id, item_id):
-    session = session_start('sqlite:///catalog.db')
-    item = session.query(Item).filter(Item.id == item_id and Item.category_id == category_id).one()
-    if request.method == 'POST':
-        Item.name =  request.form['name']
-        Item.price = request.form['price']
-        Item.description =  request.form['description']
-        Item.course = request.form['course']
-        # note: sql alchemy generates an error if I try to access the
-        # new_item object after the session
-        # CHORE: should i store name in a variable to so I flash AFTER successful commit?
-        flash('{} edited successfully!'.format(item.name))
-        session.add(item)
-        session.commit()
-        session.close()
-        return redirect(url_for('items',category_id = category_id))
-    else:
-        return render_template('editItem.html', item = item)
-
-@app.route('/categories/<int:category_id>/edit', methods = ['GET', 'POST'])
-def editcategory(category_id):
-    session = session_start('sqlite:///catalog.db')
-    category = session.query(Category).filter(Category.id == category_id).one()
-    if request.method == 'POST':
-        Category.name =  request.form['name']
-        # note: sql alchemy generates an error if I try to access the
-        # new_item object after the session
-        # CHORE: should i store name in a variable to so I flash AFTER successful commit?
-        flash('{} edited successfully!'.format(category.name))
-        session.add(category)
-        session.commit()
-        session.close()
-        return redirect(url_for('categories'))
-    else:
-        return render_template('editCategory.html', category = category)
-
-# Task 3: Create a route for deleteitem function here
-
-@app.route('/categories/<int:category_id>/item/<int:item_id>/delete', methods = ['GET', 'POST'])
-def deleteitem(category_id):
-    session = session_start('sqlite:///catalog.db')
-    item = session.query(Item).filter(Item.id == item_id and Item.category_id == category_id).one()
-    if request.method == 'POST':
-        session.delete(item)
-        session.commit()
-        session.close()
-        flash('{} deleted successfully!'.format(item.name))
-        return redirect(url_for('items',category_id = category_id))
-    else:
-        return render_template('deleteItem.html', item = item)
-
-@app.route('/categories/<int:category_id>/delete', methods = ['GET', 'POST'])
-def deletecategory(category_id):
-    session = session_start('sqlite:///catalog.db')
-    category = session.query(Category).filter(Category.id == category_id).one()
-    if request.method == 'POST':
-        session.delete(category)
-        session.commit()
-        session.close()
-        flash('{} deleted successfully!'.format(category.name))
-        return redirect(url_for('categories'))
-    else:
-        return render_template('deleteCategory.html', category = category)
+def createUser(login_session):
+    # create a new user and return the user id
+    newUser = User(name = login_session['username'], email = login_session['email'],
+              picture = login_session['picture'])
+    session.add(newUser)
+    session.commit()
+    return getUserID(login_session['email'])
+    
+def getUserInfo(user_id):
+    # return the user object given a user_id
+    # do we need a try block here in case user_id isn't in the database?
+    user = session.query(User).filter_by(id = user_id).one()
+    return user
+ 
+def user_authorized(id_to_check_against,text):
+    # checks logged in user vs input id and adds text to flash message if not
+    # CHORE: should I just redirect to main page from here?  Currently left
+    #        flexible with redirect outside the function
+    if id_to_check_against != login_session['user_id']:
+        flash('''Only the category owner is authorized to {}.  You have been
+                 redirected to the main page.'''.format(text))
+        return False
+    return True
 
 if __name__ == '__main__':
-    # need a key for sessions to use message flashing - real key would be secure
-    # class doesn't cover python sessions so CHORE: check for reference
-    app.secret_key = 'super_secret_key'
-    # this mode reloads the server each time code is changed & provides browser debug
-    # might be security issue if not on local host?? check this
-    app.debug = True  # NEVER USE IN PRODUCTION
-    # this tells vagrant to listen to port 5000 on all public IP addresses
-    # the documentation seems to indicate 0.0.0.0 is a security risk?!?
-    # since all public IPs are listened to & in debug arbitrary code will run
-    # localhost(127.0.0.1) doesn't work so need to use this - is it vagrant??
-    app.run(host='0.0.0.0', port=5000)
+  app.secret_key = 'super_secret_key'
+  app.debug = True
+  app.run(host = '0.0.0.0', port = 5000)

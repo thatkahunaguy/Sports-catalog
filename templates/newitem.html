@@ -1,48 +1,55 @@
-<html>
-<head>
-	<link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
-</head>
-<body>
-<div class = 'pane'>
-    <div class = 'header'>
-        <h1> New item Item Form - Task 1 Complete! </h1>
-    </div>
-<!-- 
-{% with messages = get_flashed_messages() %}
-    {% if messages %}
-        {% for message in messages %}
-            <h3><font color='green'>{{ message }}</font></h3>
-        {% endfor %}
+{% extends "main.html" %}
+{% block content %}
+{% include "header.html" %}
+	<div class="row divider green">
+		<div class="col-md-12"></div>
+	</div>
+	<div class="row banner menu">
+		<div class="col-md-11 col-md-offset-1 padding-none">
+			<h1>New Item</h1>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-6 col-md-offset-1 padding-top">
+			<form action="#" method = "post">
+				<div class="form-group">
+					<label for="name">Name:</label>
+					<input type ="text" maxlength="50" class="form-control" name="name"placeholder="Name of the course">
 
-    {% endif %}
-{% endwith %}
- -->
-<!-- old code when I passed added which was a blank string or name of added item
-{% if added %}
-<h2> Added new item item {{ added }} </h2>
-<a href={{ url_for('items', category_id = category_id) }}>Go Back to item</a>
-<h2> Or add another below: </h2>
-{% endif %}
- -->
+					<label for="description">Description:</label>
+					<textarea class="form-control" maxlength="250" rows="3" name="description" placeholder="Description of the course"></textarea>
 
-<form action="{{url_for('newitem', category_id=category_id )}}" method = 'POST'>
+					<label for="price">Price:</label>
+					<div class="input-group">
+						<div class="input-group-addon">$</div>
+						<input type ="text" class="form-control" maxlength="10" name="price" placeholder="Price in $">
+					</div>
+					<label for="course">Course:</label>
+					<div class="radio">
+					  <label>
+					    <input type="radio" name="course" id="course1" value="Appetizer">Appetizer
+					  </label>
+					</div>
+					<div class="radio">
+					  <label>
+					    <input type="radio" name="course" id="course2" value="Entree">Entree
+					  </label>
+					</div>
+					<div class="radio">
+					  <label>
+					    <input type="radio" name="course" id="course3" value="Dessert">Dessert
+					  </label>
+					</div>
+					<div class="radio">
+					  <label>
+					    <input type="radio" name="course" id="course4" value="Beverage">Beverage
+					  </label>
+					</div>
+					<button type="submit" class="btn btn-default" id="submit" type="submit">
+					<span class="glyphicon glyphicon-glass" aria-hidden="true"></span>Create</button>
+				</div>
+			</form>
+		</div>
+	</div>
+{% endblock %}
 
-    <p> Add a new item item: </p>
-
-    <label for='name'>Name: </label>
-    <input type='text' size='30' name='name'>
-    <br>
-    <label for='price'>Price: </label>
-    <input type='text' size='10' name='price'>
-    <br>
-    <label for='description'>Description: </label>
-    <input type='text' size='50' name='description'>
-    <br>
-    <input type='submit' value='Create'>
-
-</form>
-
-<a href={{ url_for('items', category_id = category_id) }}>Cancel</a>
-</div>
-</body>
-</html>

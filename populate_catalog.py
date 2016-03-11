@@ -20,7 +20,7 @@ session = DBSession()
 
 
 
-#Menu for UrbanBurger
+#Item for UrbanBurger
 category1 = Category(name = "Snowboards")
 
 session.add(category1)
@@ -43,7 +43,7 @@ session.commit()
 
 
 
-#Menu for Super Stir Fry
+#Item for Super Stir Fry
 category2 = Category(name = "Skis")
 
 session.add(category2)
