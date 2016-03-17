@@ -309,7 +309,7 @@ def newCategory():
   # redirect if not logged in
   if 'username' not in login_session: return redirect(url_for('showLogin'))
   if request.method == 'POST':
-      newCategory = Category(name = request.form['name'],
+      newCategory = Category(name = request.form['name'], icon = request.form['icon'],
           user_id = login_session['user_id'])
       session.add(newCategory)
       flash('New Category %s Successfully Created' % newCategory.name)
@@ -330,8 +330,12 @@ def editCategory(category_id):
   if request.method == 'POST':
       if request.form['name']:
         editedCategory.name = request.form['name']
-        flash('Category Successfully Edited %s' % editedCategory.name)
-        return redirect(url_for('showCategories'))
+      if request.form['icon']:
+        editedCategory.icon = request.form['icon']
+      # CHORE: might want to change the flash to only happen
+      # when the item was actually edited vs unchanged (all methods)
+      flash('Category Successfully Edited %s' % editedCategory.name)
+      return redirect(url_for('showCategories'))
   else:
     return render_template('editCategory.html', category = editedCategory)
 
