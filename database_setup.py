@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Column, ForeignKey, Integer, String, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
@@ -20,6 +20,7 @@ class Category(Base):
     name = Column(String(250), nullable=False)
     user_id = Column(Integer,ForeignKey('user.id'))
     user = relationship(User)
+    icon = Column(String(250))
 
     @property
     def serialize(self):
@@ -27,6 +28,7 @@ class Category(Base):
        return {
            'name'         : self.name,
            'id'           : self.id,
+           "icon"         : self.icon,
        }
  
 class Item(Base):
@@ -36,8 +38,11 @@ class Item(Base):
     name =Column(String(80), nullable = False)
     id = Column(Integer, primary_key = True)
     description = Column(String(250))
-    price = Column(String(8))
-    course = Column(String(250))
+    sex = Column(String(6))
+    country = Column(String(80))
+    flag = Column(String(250))
+    birthdate = Column(Date)
+    photo = Column(String(250))
     category_id = Column(Integer,ForeignKey('category.id'))
     category = relationship(Category)
     user_id = Column(Integer,ForeignKey('user.id'))
@@ -48,16 +53,20 @@ class Item(Base):
     def serialize(self):
        """Return object data in easily serializeable format"""
        return {
-           'name'         : self.name,
-           'description'         : self.description,
-           'id'         : self.id,
-           'price'         : self.price,
-           'course'         : self.course,
+           'name'            : self.name,
+           'description'     : self.description,
+           'id'              : self.id,
+           'sex'             : self.sex,
+           'country'         : self.country,
+           'flag'            : self.flag,
+           'birthdate'       : self.birthdate,
+           'photo'           : self.photo,
+           'category_id'     : self.category_id
        }
 
 
 
-engine = create_engine('sqlite:///catalog.db')
+engine = create_engine('sqlite:///sports.db')
  
 
 Base.metadata.create_all(engine)

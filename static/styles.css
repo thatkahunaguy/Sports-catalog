@@ -149,6 +149,23 @@ u }
 	font-weight: 400;
 	margin-top: -20px;
 }
+
+.player {
+	padding-right: 20px;
+	margin-top: -20px;
+	text-align: right;
+	float:right;
+}
+.player img {
+	width: 200px;
+	border-radius: 50%;
+}
+.player figcaption {
+	font-size: 14px;
+	color: #7B7573;
+	font-weight: 400;
+	margin-top: -20px;
+
 .flash {
 	background-color: #98FB98;
 	width:100%;

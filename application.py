@@ -1,3 +1,4 @@
+import datetime
 from flask import Flask, render_template, request, redirect,jsonify, url_for, flash
 app = Flask(__name__)
 
@@ -28,7 +29,7 @@ CLIENT_ID = json.loads(
                 open('client_secret.json','r').read())['web']['client_id']
 
 #Connect to Database and create database session
-engine = create_engine('sqlite:///catalog.db')
+engine = create_engine('sqlite:///sports.db')
 Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
@@ -352,7 +353,7 @@ def deleteCategory(category_id):
   else:
     return render_template('deleteCategory.html',category = categoryToDelete)
 
-#Show a category item
+#Show a categories items
 @app.route('/category/<int:category_id>/')
 @app.route('/category/<int:category_id>/item/')
 def showItem(category_id):
@@ -365,7 +366,8 @@ def showItem(category_id):
         return render_template('item.html', items = items, category = category,
             creator = creator)
     else:
-        return render_template('publicitem.html', items = items, category = category,
+        # CHORE: revert to publicitem.html
+        return render_template('item.html', items = items, category = category,
             creator = creator)
      
 
@@ -380,10 +382,24 @@ def newItem(category_id):
   if not user_authorized(category.user_id, "create items"):
       return redirect(url_for('showCategories'))
   if request.method == 'POST':
-      newItem = Item(name = request.form['name'],
-          description = request.form['description'], price = request.form['price'],
-          category_id = category_id,
-          user_id = login_session['user_id'])
+      bday = request.form['birthdate']
+      print bday
+      if bday:
+          bday = datetime.datetime.strptime(bday, "%Y-%m-%d").date()
+          print "Birthday: ",bday
+          newItem = Item(name = request.form['name'],
+              description = request.form['description'], 
+              sex = request.form['sex'], flag = request.form['flag'],
+              photo = request.form['photo'], country = request.form['country'],
+              category_id = category_id, birthdate = bday,
+              user_id = login_session['user_id'])
+      else:
+          newItem = Item(name = request.form['name'],
+              description = request.form['description'], 
+              sex = request.form['sex'], flag = request.form['flag'],
+              photo = request.form['photo'], country = request.form['country'],
+              category_id = category_id,
+              user_id = login_session['user_id'])
       session.add(newItem)
       session.commit()
       flash('New Item %s Item Successfully Created' % (newItem.name))
@@ -408,10 +424,16 @@ def editItem(category_id, item_id):
             editedItem.name = request.form['name']
         if request.form['description']:
             editedItem.description = request.form['description']
-        if request.form['price']:
-            editedItem.price = request.form['price']
-        if request.form['course']:
-            editedItem.course = request.form['course']
+        if request.form['photo']:
+            editedItem.photo = request.form['photo']
+        if request.form['country']:
+            editedItem.country = request.form['country']
+        if request.form['flag']:
+            editedItem.flag = request.form['flag']
+        if request.form['sex']:
+            editedItem.sex = request.form['sex']
+        if request.form['birthdate']:
+            editedItem.birthdate = datetime.datetime.strptime(request.form['birthdate'], "%Y-%m-%d").date()
         session.add(editedItem)
         session.commit() 
         flash('Item Successfully Edited')

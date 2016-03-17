@@ -55,44 +55,50 @@
 		<div class="row">
 			<div class="col-md-1"></div>
 			<div class="col-md-3">
-				<h2>Other</h2>
+				<h2>Men</h2>
 					{% for i in items %}
+					    {% if i.sex == 'Male' %}
 							<div class="item">
 								<h3>{{i.name}}</h3>
+								<figure class="player">
+				                    <img src="{{ i.photo }}">
+				                    <figcaption>{{ i.name }}</figcaption>
+			                    </figure>
+								<figure class="flag">
+				                    <img src="{{ i.flag }}">
+				                    <figcaption>{{ i.country }}</figcaption>
+			                    </figure>
+								<p>{{i.birthdate}}</p>
 								<p>{{i.description}}</p>
-								<p class="item-price">{{i.price}}</p>
 								<a href='{{url_for('editItem', category_id = category.id, item_id=i.id ) }}'>Edit</a> | 
 								<a href='{{url_for('deleteItem', category_id = category.id, item_id=i.id ) }}'>Delete</a>
 							</div>
+						 {% endif %}
 					{% endfor %}
 			</div>
 			<div class="col-md-4">			
-				<h2>Entrees</h2>
+				<h2>Women</h2>
 					{% for i in items %}
-						{% if i.course == 'Entree' %}
+						{% if i.sex == 'Female' %}
 						<div class="item">
-							<h3>{{i.name}}</h3>
-							<p>{{i.description}}</p>
-							<p class="item-price">{{i.price}}</p>
-							<a href='{{url_for('editItem', category_id = category.id, item_id=i.id ) }}'>Edit</a> | 
-							<a href='{{url_for('deleteItem', category_id = category.id, item_id=i.id ) }}'>Delete</a>
-						</div>
+								<h3>{{i.name}}</h3>
+								<figure class="player">
+				                    <img src="{{ i.photo }}">
+				                    <figcaption>{{ i.name }}</figcaption>
+			                    </figure>
+								<figure class="flag">
+				                    <img src="{{ i.flag }}">
+				                    <figcaption>{{ i.country }}</figcaption>
+			                    </figure>
+								<p>{{i.birthdate}}</p>
+								<p>{{i.description}}</p>
+								<a href='{{url_for('editItem', category_id = category.id, item_id=i.id ) }}'>Edit</a> | 
+								<a href='{{url_for('deleteItem', category_id = category.id, item_id=i.id ) }}'>Delete</a>
+							</div>
 						{% endif %}
 					{% endfor %}
 			</div>
 			<div class="col-md-3">
-				<h2>Desserts</h2>
-					{% for i in items %}
-						{% if i.course == 'Dessert' %}
-						<div class="item">
-							<h3>{{i.name}}</h3>
-							<p>{{i.description}}</p>
-							<p class="item-price">{{i.price}}</p>
-							<a href='{{url_for('editItem', category_id = category.id, item_id=i.id ) }}'>Edit</a> | 
-							<a href='{{url_for('deleteItem', category_id = category.id, item_id=i.id ) }}'>Delete</a>
-						</div>
-						{% endif %}
-					{% endfor %}
 
 			</div>
 			<div class="col-md-1"></div>
