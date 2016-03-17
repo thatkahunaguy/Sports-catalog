@@ -1,3 +1,4 @@
+import datetime
 from sqlalchemy import Column, ForeignKey, Integer, String, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -52,6 +53,11 @@ class Item(Base):
     @property
     def serialize(self):
        """Return object data in easily serializeable format"""
+       if self.birthdate:
+           bday = self.birthdate.strftime('%m-%d-%Y')
+       else:
+           bday = "No birthday entered"
+       print "Bday: ", self.birthdate
        return {
            'name'            : self.name,
            'description'     : self.description,
@@ -59,7 +65,7 @@ class Item(Base):
            'sex'             : self.sex,
            'country'         : self.country,
            'flag'            : self.flag,
-           'birthdate'       : self.birthdate,
+           'birthdate'       : bday,
            'photo'           : self.photo,
            'category_id'     : self.category_id
        }
