@@ -65,8 +65,8 @@
 				                    <figcaption>{{ i.name }}</figcaption>
 			                    </figure>
 								<figure class="flag">
-				                    <img src="{{ i.flag }}">
-				                    <figcaption>{{ i.country }}</figcaption>
+				                    <img src="{{ countries[i.country_id].flag }}">
+				                    <figcaption>{{ countries[i.country_id].name }}</figcaption>
 			                    </figure>
 								<p>{{i.birthdate}}</p>
 								<p>{{i.description}}</p>
@@ -87,8 +87,8 @@
 				                    <figcaption>{{ i.name }}</figcaption>
 			                    </figure>
 								<figure class="flag">
-				                    <img src="{{ i.flag }}">
-				                    <figcaption>{{ i.country }}</figcaption>
+				                    <img src="{{ countries[i.country_id].flag }}">
+				                    <figcaption>{{ countries[i.country_id].name }}</figcaption>
 			                    </figure>
 								<p>{{i.birthdate}}</p>
 								<p>{{i.description}}</p>

@@ -31,6 +31,25 @@ class Category(Base):
            'id'           : self.id,
            "icon"         : self.icon,
        }
+
+class Country(Base):
+    __tablename__ = 'country'
+   
+    id = Column(Integer, primary_key=True)
+    name = Column(String(80), nullable = False)
+    flag = Column(String(250))
+    user_id = Column(Integer,ForeignKey('user.id'))
+    user = relationship(User)
+
+
+    @property
+    def serialize(self):
+       """Return object data in easily serializeable format"""
+       return {
+           'name'         : self.name,
+           'id'           : self.id,
+           "flag"         : self.flag,
+       }
  
 class Item(Base):
     __tablename__ = 'item'
@@ -40,8 +59,8 @@ class Item(Base):
     id = Column(Integer, primary_key = True)
     description = Column(String(250))
     sex = Column(String(6))
-    country = Column(String(80))
-    flag = Column(String(250))
+    country_id = Column(Integer,ForeignKey('country.id'))
+    country = relationship(Country)
     birthdate = Column(Date)
     photo = Column(String(250))
     category_id = Column(Integer,ForeignKey('category.id'))

@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
-from database_setup import Base, Category, Item, User
+from database_setup import Base, Category, Item, Country, User
 
 # New imports to enable logins with Oauth2 session tokens etc
 # we use the as keyword here since we are already using session
@@ -357,22 +357,31 @@ def deleteCategory(category_id):
   else:
     return render_template('deleteCategory.html',category = categoryToDelete)
 
-#Show a categories items
+#Show a category's items
 @app.route('/category/<int:category_id>/')
 @app.route('/category/<int:category_id>/item/')
 def showItem(category_id):
     print "Item Login Session Object: ", login_session
+    countries = {}
     category = session.query(Category).filter_by(id = category_id).one()
     items = session.query(Item).filter_by(category_id = category_id).all()
+    for i in items:
+        country = session.query(Country.name,Country.flag).filter_by(id = i.country_id).one()
+        # build a dictionary of needed flags
+        # CHORE: is there a better way to access the needed flags in the view?
+        #        using a join or other?  Seems it would require accessing by element
+        #        index in the view rather than easy to understand object properties
+        if i.country_id not in countries:
+            countries[i.country_id] = country        
     creator = getUserInfo(category.user_id)
     # we use get here since it returns null vs an exception if login_session is empty
     if login_session.get("user_id") == creator.id:
         return render_template('item.html', items = items, category = category,
-            creator = creator)
+            creator = creator, countries = countries)
     else:
         # CHORE: revert to publicitem.html
         return render_template('item.html', items = items, category = category,
-            creator = creator)
+            creator = creator, countries = countries)
      
 
 
