@@ -39,6 +39,26 @@ country1 = Country(name = "Switzerland",
 
 session.add(country1)
 session.commit()
+country1 = Country(name = "United States of America",
+             flag = "http://www.atpworldtour.com/~/media/images/flags/usa.svg", user_id=1)
+
+session.add(country1)
+session.commit()
+country1 = Country(name = "Great Britain",
+             flag = "http://www.atpworldtour.com/~/media/images/flags/gbr.svg", user_id=1)
+
+session.add(country1)
+session.commit()
+country1 = Country(name = "Spain",
+             flag = "http://www.atpworldtour.com/~/media/images/flags/esp.svg", user_id=1)
+
+session.add(country1)
+session.commit()
+country1 = Country(name = "Germany",
+             flag = "http://www.atpworldtour.com/~/media/images/flags/ger.svg", user_id=1)
+
+session.add(country1)
+session.commit()
 
 item1 = Item(user_id=1, 
              name="Stan Wawrinka",
@@ -62,4 +82,14 @@ item1 = Item(user_id=1,
 session.add(item1)
 session.commit()
 
+item1 = Item(user_id=1, 
+             name="Roger Federer",
+             sex = "Male",
+             country_id = 1,
+             photo = "http://www.atpworldtour.com/~/media/tennis/players/gladiator/vibrant/federer-full15.png",
+             description= "Began playing tennis at age 8.  Idols growing up were Stefan Edberg, Boris Becker and Pete Sampras.",
+             category=category1)
+
+session.add(item1)
+session.commit()
 print "added items!"

@@ -1,11 +1,10 @@
 <div class="row top-menu">
-	<div class="col-md-6">
+	<div class="col-sm-6">
 		<a href="{{url_for('showCategories')}}">
 			<span class="glyphicon glyphicon-home" aria-hidden="true"></span>Show All Categories
 		</a>
 	</div>
-	<div class="col-md-6 text-right">
-
+	<div class="col-sm-6 text-right">
 <!-- 
 NOTE: ALTHOUGH OUR SESSION NAME IS LOGIN_SESSION, FLASK/JINJA2
 TEMPLATES ACCESS THE SESSION AS SESSION REGARDLESS OF WHAT
@@ -16,6 +15,5 @@ NAME IT WAS IMPORTED TO THE PYTHON CODE AS
       {% else: %}
       <a href="{{url_for('disconnect')}}">Logout</a>
 	  {% endif %}			  
-
 	</div>
 </div>

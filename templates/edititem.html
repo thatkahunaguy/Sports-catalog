@@ -1,27 +1,31 @@
 {% extends "main.html" %}
 {% block content %}
 {% include "header.html" %}
-	<div class="row divider green">
-		<div class="col-md-12"></div>
-	</div>
-	<div class="row banner menu">
+	<div class="row divider red"></div>
+	<div class="row banner main">
 		<div class="col-md-11 col-md-offset-1 padding-none">
 			<h1>Edit Item</h1>
 		</div>
 	</div>
+	<div class="row divider red"></div>
 	<div class="row">
 		<div class="col-md-6 col-md-offset-1 padding-top">
 			<form action="#" method = "post">
 				<div class="form-group">
 					<label for="name">Name:</label>
 					<input type ="text" maxlength="100" class="form-control" name="name" value="{{item.name}}">
-					<label for="country">Country:</label>
-					<input type ="text" maxlength="80" class="form-control" name="country" value="{{item.country}}">
-					<label for="flag">Flag Image Link:</label>
-					<textarea class="form-control" maxlength="250" rows="3" name="flag">{{item.flag}}</textarea>
-					<label for="description">Birthdate:</label>
+					<label for="country_id">Country:</label>
+					<select class="form-control" name="country_id">
+					    {% for id, country in countries.iteritems(): %}
+					        <option value = {{id}}> {{country[0]}}</option>
+					    {% endfor %}
+					</select>					<label for="description">Birthdate:</label>
+<!-- 
+					CHORE: input sanitize birthdate as format must be YYYY-MM-DD if
+					browser doesn't support a datepicker
+ -->
 					<input type ="date" class="form-control" name="birthdate" value="{{item.birthdate}}">
-					<label for="flag">Photo Link:</label>
+					<label for="photo">Photo Link:</label>
 					<textarea class="form-control" maxlength="250" rows="3" name="photo">{{item.photo}}</textarea>
 					<label for="description">Description:</label>
 					<textarea class="form-control" maxlength="250" rows="3" name="description">{{item.description}}</textarea>

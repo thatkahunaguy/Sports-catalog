@@ -1,30 +1,31 @@
 {% extends "main.html" %}
 {% block content %}
 {% include "header.html" %}
-	<div class="row divider green">
-		<div class="col-md-12"></div>
-	</div>
-	<div class="row banner menu">
+	<div class="row divider red"></div>
+	<div class="row banner main">
 		<div class="col-md-11 col-md-offset-1 padding-none">
 			<h1>New Item</h1>
 		</div>
 	</div>
+	<div class="row divider red"></div>
 	<div class="row">
 		<div class="col-md-6 col-md-offset-1 padding-top">
 			<form action="#" method = "post">
 				<div class="form-group">
 					<label for="name">Name:</label>
 					<input type ="text" maxlength="80" class="form-control" name="name" placeholder="Name of the player">
-					<label for="country">Country:</label>
-					<input type ="text" maxlength="80" class="form-control" name="country" placeholder="Country">
-					<label for="flag">Flag Image Link:</label>
-					<textarea class="form-control" maxlength="250" rows="3" name="flag" placeholder = "Flag link"></textarea>
+					<label for="country_id">Country:</label>
+					<select class="form-control" name="country_id">
+					    {% for id, country in countries.iteritems(): %}
+					        <option value = {{id}}> {{country[0]}}</option>
+					    {% endfor %}
+					</select>
 					<label for="description">Birthdate:</label>
-					<input type ="date" class="form-control" name="birthdate" placehlder = "Birthdate">
-					<label for="flag">Photo Link:</label>
+					<input type ="date" class="form-control" name="birthdate" placeholder = "Birthdate MM-DD-YYYY">
+					<label for="photo">Photo Link:</label>
 					<textarea class="form-control" maxlength="250" rows="3" name="photo" placeholder = "Photo link"></textarea>
 					<label for="description">Description:</label>
-					<textarea class="form-control" maxlength="250" rows="3" name="description" placeholder="Description of the course"></textarea>
+					<textarea class="form-control" maxlength="250" rows="3" name="description" placeholder="Brief player information"></textarea>
 
 				<label for="sex">Sex:</label>
 					<div class="radio">

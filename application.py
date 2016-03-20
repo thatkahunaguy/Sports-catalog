@@ -365,14 +365,12 @@ def showItem(category_id):
     countries = {}
     category = session.query(Category).filter_by(id = category_id).one()
     items = session.query(Item).filter_by(category_id = category_id).all()
-    for i in items:
-        country = session.query(Country.name,Country.flag).filter_by(id = i.country_id).one()
-        # build a dictionary of needed flags
-        # CHORE: is there a better way to access the needed flags in the view?
-        #        using a join or other?  Seems it would require accessing by element
-        #        index in the view rather than easy to understand object properties
-        if i.country_id not in countries:
-            countries[i.country_id] = country        
+    country_ids = set([item.country_id for item in items])
+    # build a dictionary of needed country names & flags
+    # CHORE: is it more efficient to just load all names/flags globally once?
+    countries = getCountryInfo(country_ids)
+#     for id in country_ids:
+#         countries[id] = session.query(Country.name,Country.flag).filter_by(id = id).one() 
     creator = getUserInfo(category.user_id)
     # we use get here since it returns null vs an exception if login_session is empty
     if login_session.get("user_id") == creator.id:
@@ -392,8 +390,9 @@ def newItem(category_id):
   if 'username' not in login_session: return redirect(url_for('showLogin'))
   category = session.query(Category).filter_by(id = category_id).one()
   # redirect to main page & flash unauthorized if user is not creator
-  if not user_authorized(category.user_id, "create items"):
-      return redirect(url_for('showCategories'))
+#****CHORE: REMOVE COMMENT AS OWNER CHECK DISABLED FOR TESTING***
+#  if not user_authorized(category.user_id, "create items"):
+#      return redirect(url_for('showCategories'))
   if request.method == 'POST':
       bday = request.form['birthdate']
       print bday
@@ -402,15 +401,15 @@ def newItem(category_id):
           print "Birthday: ",bday
           newItem = Item(name = request.form['name'],
               description = request.form['description'], 
-              sex = request.form['sex'], flag = request.form['flag'],
-              photo = request.form['photo'], country = request.form['country'],
+              sex = request.form['sex'],
+              photo = request.form['photo'], country_id = request.form['country_id'],
               category_id = category_id, birthdate = bday,
               user_id = login_session['user_id'])
       else:
           newItem = Item(name = request.form['name'],
               description = request.form['description'], 
-              sex = request.form['sex'], flag = request.form['flag'],
-              photo = request.form['photo'], country = request.form['country'],
+              sex = request.form['sex'],
+              photo = request.form['photo'], country_id = request.form['country_id'],
               category_id = category_id,
               user_id = login_session['user_id'])
       session.add(newItem)
@@ -418,7 +417,7 @@ def newItem(category_id):
       flash('New Item %s Item Successfully Created' % (newItem.name))
       return redirect(url_for('showItem', category_id = category_id))
   else:
-      return render_template('newitem.html', category_id = category_id)
+      return render_template('newitem.html', category_id = category_id, countries = getCountryInfo())
 
                 
 #Edit a item
@@ -429,8 +428,9 @@ def editItem(category_id, item_id):
     editedItem = session.query(Item).filter_by(id = item_id).one()
     category = session.query(Category).filter_by(id = category_id).one()
     # redirect to main page & flash unauthorized if user is not creator
-    if not user_authorized(category.user_id, "edit"):
-        return redirect(url_for('showCategories'))
+#****CHORE: REMOVE COMMENT AS OWNER CHECK DISABLED FOR TESTING***
+#    if not user_authorized(category.user_id, "edit"):
+#        return redirect(url_for('showCategories'))
                 
     if request.method == 'POST':
         if request.form['name']:
@@ -439,10 +439,8 @@ def editItem(category_id, item_id):
             editedItem.description = request.form['description']
         if request.form['photo']:
             editedItem.photo = request.form['photo']
-        if request.form['country']:
-            editedItem.country = request.form['country']
-        if request.form['flag']:
-            editedItem.flag = request.form['flag']
+        if request.form['country_id']:
+            editedItem.country_id = request.form['country_id']
         if request.form['sex']:
             editedItem.sex = request.form['sex']
         if request.form['birthdate']:
@@ -452,7 +450,7 @@ def editItem(category_id, item_id):
         flash('Item Successfully Edited')
         return redirect(url_for('showItem', category_id = category_id))
     else:
-        return render_template('edititem.html', category_id = category_id, item_id = item_id, item = editedItem)
+        return render_template('edititem.html', category_id = category_id, item_id = item_id, item = editedItem, countries = getCountryInfo())
 
 
 #Delete a item
@@ -503,6 +501,20 @@ def user_authorized(id_to_check_against,text):
                  redirected to the main page.'''.format(text))
         return False
     return True
+
+def getCountryInfo(country_ids = None):
+    # return a dictionary of country_id: countrynames, flags) given a 
+    # list of country_ids.  Return all Country objects if no list is provided.
+    countries = {}
+    if country_ids:
+        for id in country_ids:
+            countries[id] = session.query(Country.name,Country.flag).filter_by(id = id).one()
+    else:
+        all_countries = session.query(Country).all()
+        for c in all_countries:
+            countries[c.id] = (c.name,c.flag)
+    print "Countries: ", countries
+    return countries
 
 if __name__ == '__main__':
   app.secret_key = 'super_secret_key'

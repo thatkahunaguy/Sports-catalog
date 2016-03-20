@@ -1,46 +1,52 @@
 {% extends "main.html" %}
 {% block content %}
 {% include "header.html" %}
-	<div class="row top-menu">
-		<div class="col-md-10"></div>
-		<div class="col-md-2 text-right">
-					</div>
-	</div>
-	<div class="row divider blue">
-		<div class="col-md-12"></div>
+
+	<div class="row divider red">
 	</div>
 	<div class="row banner main">
-		<div class="col-md-1"></div>
-		<div class="col-md-11 padding-none">
+		<div class="col-sm-1"></div>
+		<div class="col-sm-11 padding-none">
 			<h1>Categories</h1>
 		</div>
+	</div>
+	<div class="row divider red">
 	</div>
 
     {% include "flash.html" %}
 	
 	<div class="row padding-top padding-bottom">
-		<div class="col-md-1"></div>
-		<div class="col-md-10 padding-none">
+		<div class="col-sm-1"></div>
+		<div class="col-sm-10 padding-none">
 			<a href="{{url_for('newCategory')}}">
 				<button class="btn btn-default" id="new-category">
 					<span class="glyphicon glyphicon-cutlery" aria-hidden="true"></span>Add Category
 				</button>
 			</a>
 		</div>
-		<div class="col-md-1"></div>
+		<div class="col-sm-1"></div>
 	</div>
-	{% for category in categories %}
-		<a href = "{{url_for('showItem', category_id = category.id)}}">
+	{% set count = 0 %}
+	{% for category in categories %}	
+		    {% if count % 2 == 0 %}
 			<div class="row">
 				<div class="col-md-1"></div>
-					<div class="col-md-10 category-list">
-						<h3>{{category.name}}</h3>
+			{% endif %}
+			{% set count = count + 1 %}
+					<a href = "{{url_for('showItem', category_id = category.id)}}">
+					<div class="col-md-4 category-list">						
 						<figure class="flag">
-				                    <img src="{{ category.icon }}">
-			            </figure>
+				                    <img src="{{ category.icon }}">			            
+			            <figcaption>{{category.name}}</figcaption>
+			            </figure>		            
 					</div>
-				<div class="col-md-1"></div>
+					</a>
+			{% if count % 2 == 1 %}
+				<div class="col-md-2"></div>
+			{% else %}
+			    <div class="col-md-1"></div>
 			</div>
-		</a>
+			{% endif %}
+		
 	{% endfor %}
 {% endblock %}

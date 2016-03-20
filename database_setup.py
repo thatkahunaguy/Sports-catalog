@@ -82,8 +82,7 @@ class Item(Base):
            'description'     : self.description,
            'id'              : self.id,
            'sex'             : self.sex,
-           'country'         : self.country,
-           'flag'            : self.flag,
+           'country_id'      : self.country_id,
            'birthdate'       : bday,
            'photo'           : self.photo,
            'category_id'     : self.category_id

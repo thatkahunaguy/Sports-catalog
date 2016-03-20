@@ -13,7 +13,7 @@ h1 {
 
 h2 {
 	font-size: 24px;
-	color: #42C3C9;
+	color: #2E4D86;
 	line-height: 29px;
 }
 
@@ -56,12 +56,12 @@ h3 {
 .btn {
 	padding: 20px;
 	margin: 0;
-	border-color: #9FB80A;
+	border-color: #8DBE50;
 	border-width: 2px;
-	color: #9FB80A;;
+	color: #8DBE50;;
 }
 .btn:hover {
-	border-color: #9FB80A;
+	border-color: #8DBE50;
 }
 .btn.delete {
 	border-color: #aaaaaa;
@@ -69,7 +69,7 @@ h3 {
 }
 .btn.delete:hover {
 	border-color: #aaaaaa;
-	color: red;
+	color: #cc4733;
 }
 .glyphicon {
 	margin-right: 10px;
@@ -92,18 +92,19 @@ h3 {
 .divider {
 	height: 15px;
 }
-.divider.blue {
-	background-color: #42C3C9;
+.divider.red {
+	background-color: #cc4733;
 }
-.divider.green {
-	background-color: #9FB80A;
+.divider.blue {
+	background-color: #2E4D86;
+	margin-right: 20px;
 }
 .banner.main {
 	height: 150px;
-	background: url("/static/top-banner.jpg");
+	background: url("http://www.rio2016.com/sites/all/themes/rio2016_agosto_14/img/logo-rio2016-en.png");
 	background-position: right;
 	background-repeat: no-repeat;
-	background-size: cover;
+	background-size: auto 80%;
 }
 .banner.menu {
 	height: 150px;
@@ -116,14 +117,23 @@ h3 {
 .banner h1 {
 	margin: 45px 0;
 }
- .category-list {
+.category-list {
  	background-color: #F0F0F0;
  	padding: 20px;
-u }
- .category-list:hover {
- 	background-color: #e1e17f;
+ 	margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    font-size: 2em;
+    color: #cc4733;
+    border: 5px solid #f1d246;
+}
+.category-list:hover {
+ 	background-color: #8DBE50;
  	padding: 20px;
 }
+
+
+
 .item {
 	background: #F0F0F0;
 	padding: 20px;
@@ -136,11 +146,11 @@ u }
 .creator {
 	padding-right: 20px;
 	margin-top: -20px;
-	text-align: right;
-	float:right;
+	text-align: center;
+	float: left;
 }
 .creator img {
-	width: 100px;
+	width: 70px;
 	border-radius: 50%;
 }
 .creator figcaption {
