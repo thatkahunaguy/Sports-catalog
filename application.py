@@ -380,7 +380,28 @@ def showItem(category_id):
         # CHORE: revert to publicitem.html
         return render_template('item.html', items = items, category = category,
             creator = creator, countries = countries)
-     
+
+@app.route('/category/<int:category_id>/item/<int:item_id>')
+def showItemDetail(category_id,item_id):
+    print "Item Login Session Object: ", login_session
+    countries = {}
+    category = session.query(Category).filter_by(id = category_id).one()
+    item = session.query(Item).filter_by(id = item_id).one()
+    # build a dictionary of needed country names & flags
+    # CHORE: is it more efficient to just load all names/flags globally once?
+    countries = getCountryInfo([item.country_id])
+    age = getAge(item.birthdate)
+#     for id in country_ids:
+#         countries[id] = session.query(Country.name,Country.flag).filter_by(id = id).one() 
+    creator = getUserInfo(category.user_id)
+    # we use get here since it returns null vs an exception if login_session is empty
+    if login_session.get("user_id") == creator.id:
+        return render_template('item_detail.html', item = item, category = category,
+            creator = creator, countries = countries, age = age)
+    else:
+        # CHORE: revert to publicitem.html
+        return render_template('item_detail.html', item = item, category = category,
+            creator = creator, countries = countries, age = age)     
 
 
 #Create a new item
@@ -516,6 +537,13 @@ def getCountryInfo(country_ids = None):
     print "Countries: ", countries
     return countries
 
+def getAge(bday):  
+    today = datetime.date.today()
+    try:
+        return (today.year - bday.year - ((today.month, today.day) < (bday.month, bday.day)))
+    except:
+        return "TBD"
+        
 if __name__ == '__main__':
   app.secret_key = 'super_secret_key'
   app.debug = True

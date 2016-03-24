@@ -39,7 +39,6 @@ h3 {
  a {
  	font-size: 14px;
  	color: #0093B9;
- 	line-height: 17px;
  }
 .padding-top {
 	padding-top: 30px;
@@ -120,8 +119,9 @@ h3 {
 .category-list {
  	background-color: #F0F0F0;
  	padding: 20px;
+ 	margin-top: 10px;
  	margin-left: auto;
-    margin-right: auto;
+ 	margin-right: auto;
     text-align: center;
     font-size: 2em;
     color: #cc4733;
@@ -136,13 +136,35 @@ h3 {
 
 .item {
 	background: #F0F0F0;
-	padding: 20px;
-	margin: 20px;
-	margin-left: -20px;
+	padding: 10px;
+	margin: 20px 20px 20px 0px;
+/* 
+	border: 2px solid red;
+ */
 }
-.item-price {
-	font-weight: 700;
+
+.item img {
+    margin: 0px;
+/* 
+    border: 2px solid green;
+ */
 }
+
+.item-name {
+	font-size: 2em;
+/* 
+	border: 2px solid blue;
+ */
+}
+
+.category-name a{
+    font-family: "Helvetica Neue Light", Roboto, Helvetica, Arial, sans-serif;
+	font-size: 50px;
+	color: #51453B;
+	line-height: 60px;
+	font-weight: 300;
+}
+
 .creator {
 	padding-right: 20px;
 	margin-top: -20px;
@@ -160,21 +182,117 @@ h3 {
 	margin-top: -20px;
 }
 
+.item-detail {
+	background: #F0F0F0;
+	padding: 20px;
+	margin: 20px;
+	margin-left: -20px;
+	position: relative;
+/* 
+	border: 2px solid blue;
+ */
+	overflow: hidden;
+}
+
 .player {
-	padding-right: 20px;
-	margin-top: -20px;
-	text-align: right;
-	float:right;
+	font-size: 4em;
+/* 
+	border: 2px solid red;
+ */
+/* 
+	position: relative;
+ */
+	z-index: 3;
 }
-.player img {
-	width: 200px;
-	border-radius: 50%;
-}
+
+/* 
 .player figcaption {
 	font-size: 14px;
 	color: #7B7573;
 	font-weight: 400;
 	margin-top: -20px;
+}
+ */
+
+.player-image {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+/* 
+    border: 2px solid green;
+ */
+    z-index: 1;
+}
+
+.player-image img {
+	width: 200px;
+	border-radius: 50%;
+/* 
+	border: 2px solid blue;
+ */
+	
+}
+
+.player-description {
+    width: 65%;
+/* 
+    border: 2px solid black;
+ */
+}
+
+.player-age-label {
+
+    transform: rotate(-90deg);
+    position: relative;
+    float: left;
+/* 
+    border: 2px solid purple;
+ */
+    font-size: 2em;
+    padding-top: 30px;
+}
+
+.player-age {
+    width: 30%;
+/* 
+    border: 2px solid blue;
+ */
+    display: inline-block;
+    margin-left: 5px;
+    color: #969b9d;
+    font: 3em 'roboto_condensedregular';
+    letter-spacing: -1px;
+    text-transform: uppercase;
+    position: relative;
+    padding: 0px 5px 0px 10px;
+/* 
+    top: 0px;
+    width: 16px
+ */
+}
+
+.player-flag {
+    position: relative;
+/* 
+    border: 2px dotted brown;
+ */
+    float: left;
+    width: 20%; /* CHORE - FIX */
+}
+
+.flag {
+    position: relative;
+/* 
+    border: 2px dotted brown;
+ */
+    float: left;
+    size: 50px;
+}
+
+
+.clear {
+    clear: both;
+}
 
 .flash {
 	background-color: #98FB98;
