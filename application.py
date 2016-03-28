@@ -465,7 +465,11 @@ def editItem(category_id, item_id):
         if request.form['sex']:
             editedItem.sex = request.form['sex']
         if request.form['birthdate']:
-            editedItem.birthdate = datetime.datetime.strptime(request.form['birthdate'], "%Y-%m-%d").date()
+            try:
+                editedItem.birthdate = datetime.datetime.strptime(request.form['birthdate'], "%Y-%m-%d").date()
+            except ValueError:
+                flash('Incorrect date format.  Please enter birthday in the requested format')
+                return render_template('edititem.html', category_id = category_id, item_id = item_id, item = editedItem, countries = getCountryInfo())           
         session.add(editedItem)
         session.commit() 
         flash('Item Successfully Edited')
