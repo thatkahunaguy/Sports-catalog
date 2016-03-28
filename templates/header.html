@@ -17,3 +17,24 @@ NAME IT WAS IMPORTED TO THE PYTHON CODE AS
 	  {% endif %}			  
 	</div>
 </div>
+
+
+<div class="row divider red"></div>
+<div class="row banner main">
+    <div class="col-sm-11 col-md-offset-1 padding-none">
+        {% if page_title: %}
+            <h1>{{ page_title }}
+        {% else %}
+            <h1>{{ category.name }}
+        {% endif %}
+        {% if creator: %}
+            <figure class="creator">
+                <img src="{{ creator.picture }}">
+                <figcaption>{{ creator.name }}</figcaption>
+            </figure>
+        {% endif %}
+        </h1>
+    </div>
+</div>
+<div class="row divider red"></div>
+{% include "flash.html" %}
