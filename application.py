@@ -1,5 +1,6 @@
 import datetime
-from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
+from flask import Flask, render_template, request, redirect, jsonify
+from flask import url_for, flash
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, Category, Item, Country, User
@@ -37,7 +38,7 @@ session = DBSession()
 # our login template - could have called it something else
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
-# Validate state token
+    # Validate state token
     if request.args.get('state') != login_session['state']:
         response = make_response(json.dumps('Invalid state parameter.'), 401)
         response.headers['Content-Type'] = 'application/json'
@@ -91,8 +92,8 @@ def gconnect():
     stored_credentials = login_session.get('access_token')
     stored_gplus_id = login_session.get('gplus_id')
     if stored_credentials is not None and gplus_id == stored_gplus_id:
-        response = make_response(json.dumps('Current user is already connected.'),
-                                 200)
+        response = make_response(json.dumps(
+                                 'Current user is already connected.'), 200)
         response.headers['Content-Type'] = 'application/json'
         return response
     # Whew! None of the above are true so store relevant info!
@@ -122,7 +123,7 @@ def gconnect():
     output += '!</h1>'
     output += '<img src="'
     output += login_session['picture']
-    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+    output += ''' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '''
     flash("you are now logged in as %s" % login_session['username'])
     print "done!"
     return output
@@ -144,7 +145,8 @@ def fbconnect():
         'web']['app_id']
     app_secret = json.loads(
         open('fb_client_secret.json', 'r').read())['web']['app_secret']
-    url = 'https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id={}&client_secret={}&fb_exchange_token={}'.format(app_id, app_secret, access_token)
+    url = ('https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id={}&client_secret={}&fb_exchange_token={}'
+           .format(app_id, app_secret, access_token))
     h = httplib2.Http()
     result = h.request(url, 'GET')[1]
     # Use token to get user info from API
@@ -162,11 +164,13 @@ def fbconnect():
     login_session['username'] = data["name"]
     login_session['email'] = data["email"]
     login_session['facebook_id'] = data["id"]
-    # The token must be stored in the login_session in order to properly logout, let's strip out the information before the equals sign in our token
+    # The token must be stored in the login_session in order to properly logout,
+    # let's strip out the information before the equals sign in our token
     stored_token = token.split("=")[1]
     login_session['access_token'] = stored_token
     # Get user picture
-    url = 'https://graph.facebook.com/v2.4/me/picture?%s&redirect=0&height=200&width=200' % token
+    url = ('https://graph.facebook.com/v2.4/me/picture?{}&redirect=0&height=200&width=200'
+           .format(token,))
     h = httplib2.Http()
     result = h.request(url, 'GET')[1]
     data = json.loads(result)
@@ -182,7 +186,8 @@ def fbconnect():
     output += '!</h1>'
     output += '<img src="'
     output += login_session['picture']
-    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+    output += ''' " style = "width: 300px; height: 300px;border-radius: 150px;
+               -webkit-border-radius: 150px;-moz-border-radius: 150px;"> '''
     flash("Now logged in as %s" % login_session['username'])
     return output
 
@@ -201,13 +206,15 @@ def disconnect():
     # load the url to revoke the access token on Google's servers
     if 'facebook_id' in login_session:
         facebook_id = login_session['facebook_id']
-        url = 'https://graph.facebook.com/{}/permissions?access_token={}'.format(facebook_id,access_token)
+        url = ('https://graph.facebook.com/{}/permissions?access_token={}'
+               .format(facebook_id, access_token))
         request_type = 'DELETE'
         # this is the index of the revoke response where the status code is
         result_index = 0
     else:
         # logged in thru google so disconnect there
-        url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
+        url = ('https://accounts.google.com/o/oauth2/revoke?token={}'
+               .format(login_session['access_token'],))
         request_type = 'GET'
         result_index = 0
     h = httplib2.Http()
@@ -223,7 +230,8 @@ def disconnect():
         flash('Successfully disconnected, YOU ARE LOGGED OUT')
         return redirect(url_for('showCategories'))
     else:
-        response = make_response(json.dumps('Failed to revoke token for given user.', 400))
+        response = make_response(json.dumps(
+                       'Failed to revoke token for given user.', 400))
         response.headers['Content-Type'] = 'application/json'
         return response
 
@@ -250,7 +258,8 @@ def showLogin():
 #                       CLIENT_ID=CLIENT_ID,
 #                       STATE=state,
 #                       APPLICATION_NAME=APPLICATION_NAME))
-    return render_template('login.html', STATE=login_session['state'], page_title="Login")
+    return render_template('login.html', STATE=login_session['state'],
+                           page_title="Login")
 
 
 # JSON APIs to view Category Information
@@ -281,13 +290,15 @@ def showCategories():
     print "Category Login Session Object: ", login_session
     # show the public template if not logged in (no add category option)
     if 'username' not in login_session:
-        return render_template('publiccategories.html', categories=categories)
+        return render_template('publiccategories.html', categories=categories,
+                               page_title="Categories")
     else:
-        return render_template('categories.html', categories=categories, page_title="Categories")
+        return render_template('categories.html', categories=categories,
+                               page_title="Categories")
 
 
 # Create a new category
-@app.route('/category/new/', methods=['GET','POST'])
+@app.route('/category/new/', methods=['GET', 'POST'])
 def newCategory():
     # redirect if not logged in
     if 'username' not in login_session:
@@ -322,7 +333,8 @@ def editCategory(category_id):
         flash('Category Successfully Edited %s' % editedCategory.name)
         return redirect(url_for('showCategories'))
     else:
-        return render_template('editCategory.html', category=editedCategory, page_title="Edit Category")
+        return render_template('editCategory.html', category=editedCategory,
+                               page_title="Edit Category")
 
 
 # Delete a category
@@ -341,7 +353,8 @@ def deleteCategory(category_id):
         session.commit()
         return redirect(url_for('showCategories', category_id=category_id))
     else:
-        return render_template('deleteCategory.html', category=categoryToDelete, page_title="Delete Category")
+        return render_template('deleteCategory.html', category=categoryToDelete,
+                               page_title="Delete Category")
 
 
 # Show a category's items
@@ -357,13 +370,15 @@ def showItem(category_id):
     # CHORE: is it more efficient to just load all names/flags globally once?
     countries = getCountryInfo(country_ids)
     creator = getUserInfo(category.user_id)
-    # we use get here since it returns null vs an exception if login_session is empty
+    # we use get here since it returns null vs an exception if
+    # login_session is empty
     if login_session.get("user_id") == creator.id:
         return render_template('item.html', items=items, category=category,
-            creator=creator, countries=countries)
+                               creator=creator, countries=countries)
     else:
-        return render_template('publicitem.html', items=items, category=category,
-            creator=creator, countries=countries)
+        return render_template('publicitem.html', items=items,
+                               category=category, creator=creator,
+                               countries=countries)
 
 
 @app.route('/category/<int:category_id>/item/<int:item_id>')
@@ -377,13 +392,15 @@ def showItemDetail(category_id, item_id):
     countries = getCountryInfo([item.country_id])
     age = getAge(item.birthdate)
     creator = getUserInfo(category.user_id)
-    # we use get here since it returns null vs an exception if login_session is empty
+    # we use get here since it returns null vs an exception if
+    # login_session is empty
     if login_session.get("user_id") == creator.id:
         return render_template('item_detail.html', item=item, category=category,
-            creator=creator, countries=countries, age=age)
+                               creator=creator, countries=countries, age=age)
     else:
-        return render_template('publicitemdetail.html', item=item, category=category,
-            creator=creator, countries=countries, age=age)
+        return render_template('publicitemdetail.html', item=item,
+                               category=category, creator=creator,
+                               countries=countries, age=age)
 
 
 # Create a new item
@@ -421,11 +438,14 @@ def newItem(category_id):
             flash('New Item %s Item Successfully Created' % (newItem.name))
             return redirect(url_for('showItem', category_id=category_id))
     else:
-        return render_template('newitem.html', category_id=category_id, countries=getCountryInfo(), page_title="Add An Item")
+        return render_template('newitem.html', category_id=category_id,
+                               countries=getCountryInfo(),
+                               page_title="Add An Item")
 
 
 # Edit an item
-@app.route('/category/<int:category_id>/item/<int:item_id>/edit', methods=['GET', 'POST'])
+@app.route('/category/<int:category_id>/item/<int:item_id>/edit',
+           methods=['GET', 'POST'])
 def editItem(category_id, item_id):
     # redirect if not logged in
     if 'username' not in login_session:
@@ -448,27 +468,35 @@ def editItem(category_id, item_id):
             editedItem.sex = request.form['sex']
         if request.form['birthdate']:
             try:
-                editedItem.birthdate = datetime.datetime.strptime(request.form['birthdate'], "%Y-%m-%d").date()
+                editedItem.birthdate = datetime.datetime.strptime(
+                    request.form['birthdate'], "%Y-%m-%d").date()
             except ValueError:
-                flash('Incorrect date format.  Please enter birthday in the requested format')
-                return render_template('edititem.html', category_id=category_id, item_id=item_id, item=editedItem, countries=getCountryInfo(), page_title="Edit Item")
+                flash('Incorrect date format.  Please use the requested format')
+                return render_template('edititem.html', category_id=category_id,
+                                       item_id=item_id, item=editedItem,
+                                       countries=getCountryInfo(),
+                                       page_title="Edit Item")
         session.add(editedItem)
         session.commit()
         flash('Item Successfully Edited')
         return redirect(url_for('showItem', category_id=category_id))
     else:
-        return render_template('edititem.html', category_id=category_id, item_id=item_id, item=editedItem, countries=getCountryInfo(), page_title="Edit Item")
+        return render_template('edititem.html', category_id=category_id,
+                               item_id=item_id, item=editedItem,
+                               countries=getCountryInfo(),
+                               page_title="Edit Item")
 
 
 # Delete an item
-@app.route('/category/<int:category_id>/item/<int:item_id>/delete', methods=['GET', 'POST'])
+@app.route('/category/<int:category_id>/item/<int:item_id>/delete',
+           methods=['GET', 'POST'])
 def deleteItem(category_id, item_id):
     # redirect if not logged in
     if 'username' not in login_session:
         return redirect(url_for('showLogin'))
     category = session.query(Category).filter_by(id=category_id).one()
     itemToDelete = session.query(Item).filter_by(id=item_id).one()
-        # redirect to main page & flash unauthorized if user is not creator
+    # redirect to main page & flash unauthorized if user is not creator
     if not user_authorized(category.user_id, "delete"):
         return redirect(url_for('showCategories'))
     if request.method == 'POST':
@@ -477,7 +505,8 @@ def deleteItem(category_id, item_id):
         flash('Item Successfully Deleted')
         return redirect(url_for('showItem', category_id=category_id))
     else:
-        return render_template('deleteItem.html', category_id=category_id, item=itemToDelete, page_title="Delete Item")
+        return render_template('deleteItem.html', category_id=category_id,
+                               item=itemToDelete, page_title="Delete Item")
 
 
 def getUserID(email):
@@ -490,8 +519,9 @@ def getUserID(email):
 
 def createUser(login_session):
     # create a new user and return the user id
-    newUser = User(name=login_session['username'], email=login_session['email'],
-              picture=login_session['picture'])
+    newUser = User(name=login_session['username'],
+                   email=login_session['email'],
+                   picture=login_session['picture'])
     session.add(newUser)
     session.commit()
     return getUserID(login_session['email'])
@@ -521,7 +551,8 @@ def getCountryInfo(country_ids=None):
     countries = {}
     if country_ids:
         for id in country_ids:
-            countries[id] = session.query(Country.name, Country.flag).filter_by(id=id).one()
+            countries[id] = session.query(Country.name,
+                                          Country.flag).filter_by(id=id).one()
     else:
         all_countries = session.query(Country).all()
         for c in all_countries:
@@ -533,7 +564,8 @@ def getCountryInfo(country_ids=None):
 def getAge(bday):
     today = datetime.date.today()
     try:
-        return (today.year - bday.year - ((today.month, today.day) < (bday.month, bday.day)))
+        return (today.year - bday.year
+                - ((today.month, today.day)< (bday.month, bday.day)))
     except:
         return "TBD"
 
