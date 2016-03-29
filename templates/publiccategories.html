@@ -2,6 +2,19 @@
 {% block content %}
 {% include "header.html" %}
 
+<div class="row padding-top padding-none">
+    <div class="col-sm-1"></div>
+    <div class="col-sm-7 padding-top">
+        <str>LATEST ADDITIONS:</str><br>
+        {% for i in latest %}
+            <a href = "{{url_for('showItemDetail', category_id=i[3], item_id=i[0])}}">
+                {{i[1]}}
+            </a>
+            ({{i[2]}})
+        {% endfor %}
+    </div>
+    <div class="col-sm-4"></div>
+</div>
 	{% set count = 0 %}
 	{% for category in categories %}	
 		    {% if count % 2 == 0 %}
