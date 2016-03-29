@@ -76,7 +76,7 @@ class Item(Base):
            bday = self.birthdate.strftime('%m-%d-%Y')
        else:
            bday = "No birthday entered"
-       print "Bday: ", self.birthdate
+       # print "Bday: ", self.birthdate
        return {
            'name'            : self.name,
            'description'     : self.description,

@@ -63,8 +63,8 @@ def gconnect():
     h = httplib2.Http()
     # that google url will return an error if invalid & token info otherwise
     result = json.loads(h.request(url, 'GET')[1])
-    print "**LOGIN RESULT: ", result
-    print "**ACCESS TOKEN: ", credentials.access_token
+    # print "**LOGIN RESULT: ", result
+    # print "**ACCESS TOKEN: ", credentials.access_token
     # If there was an error in the access token info, abort.
     # NOTE: these result.get statements are parsing the json result object
     if result.get('error') is not None:
@@ -116,7 +116,7 @@ def gconnect():
     if not user_id:
         user_id = createUser(login_session)
     login_session['user_id'] = user_id
-    print "In LOGIN: Login Session Object: ", login_session
+    # print "In LOGIN: Login Session Object: ", login_session
     output = ''
     output += '<h1>Welcome, '
     output += login_session['username']
@@ -138,7 +138,7 @@ def fbconnect():
     # get the short term access token
     # https://developers.facebook.com/docs/facebook-login/access-tokens
     access_token = request.data
-    print "access token received %s " % access_token
+    # print "access token received %s " % access_token
     # convert short term token to a long term token
     # https://developers.facebook.com/docs/facebook-login/access-tokens/expiration-and-extension
     app_id = json.loads(open('fb_client_secret.json', 'r').read())[
@@ -195,7 +195,7 @@ def fbconnect():
 # generic disconnect function rather than individual gdisconnect & fbdisconnect
 @app.route('/disconnect')
 def disconnect():
-    print "In disconnect: Login Session Object: ", login_session
+    # print "In disconnect: Login Session Object: ", login_session
     access_token = login_session.get('access_token')
     # return an error if no one is logged in
     if access_token is None:
@@ -220,8 +220,8 @@ def disconnect():
     h = httplib2.Http()
     result = h.request(url, request_type)
     # print loop and indexing result below rather than above for debug
-    for r in result:
-        print "**{} RESULT**: ".format(login_session['provider']), r
+    # for r in result:
+        # print "**{} RESULT**: ".format(login_session['provider']), r
     result = result[result_index]
     if result['status'] == '200':
         print "CLEARING THE LOGIN SESSION"
@@ -272,8 +272,8 @@ def catalogJSON(category_id):
 
 @app.route('/category/<int:category_id>/item/<int:item_id>/JSON')
 def itemJSON(category_id, item_id):
-    Item = session.query(Item).filter_by(id=item_id).one()
-    return jsonify(Item=Item.serialize)
+    item = session.query(Item).filter_by(id=item_id).one()
+    return jsonify(Item=item.serialize)
 
 
 @app.route('/category/JSON')
@@ -287,7 +287,7 @@ def categoriesJSON():
 @app.route('/category/')
 def showCategories():
     categories = session.query(Category).order_by(asc(Category.name))
-    print "Category Login Session Object: ", login_session
+    #print "Category Login Session Object: ", login_session
     latest = getLatestThree()
     # show the public template if not logged in (no add category option)
     if 'username' not in login_session:
@@ -362,7 +362,7 @@ def deleteCategory(category_id):
 @app.route('/category/<int:category_id>/')
 @app.route('/category/<int:category_id>/item/')
 def showItem(category_id):
-    print "Item Login Session Object: ", login_session
+    # print "Item Login Session Object: ", login_session
     countries = {}
     category = session.query(Category).filter_by(id=category_id).one()
     items = session.query(Item).filter_by(category_id=category_id).all()
@@ -384,7 +384,7 @@ def showItem(category_id):
 
 @app.route('/category/<int:category_id>/item/<int:item_id>')
 def showItemDetail(category_id, item_id):
-    print "Item Login Session Object: ", login_session
+    # print "Item Login Session Object: ", login_session
     countries = {}
     category = session.query(Category).filter_by(id=category_id).one()
     item = session.query(Item).filter_by(id=item_id).one()
@@ -416,7 +416,6 @@ def newItem(category_id):
         return redirect(url_for('showCategories'))
     if request.method == 'POST':
         bday = request.form['birthdate']
-        print bday
         if bday:
             bday = datetime.datetime.strptime(bday, "%Y-%m-%d").date()
             newItem = Item(name=request.form['name'],
@@ -558,7 +557,6 @@ def getCountryInfo(country_ids=None):
         all_countries = session.query(Country).all()
         for c in all_countries:
             countries[c.id] = (c.name, c.flag)
-    print "Countries: ", countries
     return countries
 
 
@@ -572,12 +570,9 @@ def getAge(bday):
 
 
 def getLatestThree():
-    print "****getlatest****"
     latest = (session.query(Item.id, Item.name, Category.name, Category.id)
         .join(Category)
         .order_by(Item.id.desc()).limit(3).all())
-    for i in latest:
-        print "i: ", i
     return latest
 
 
