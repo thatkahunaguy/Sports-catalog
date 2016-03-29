@@ -64,7 +64,7 @@ class Item(Base):
     birthdate = Column(Date)
     photo = Column(String(250))
     category_id = Column(Integer,ForeignKey('category.id'))
-    category = relationship(Category)
+    category = relationship(Category, cascade="save-update, merge, delete")
     user_id = Column(Integer,ForeignKey('user.id'))
     user = relationship(User)
 
