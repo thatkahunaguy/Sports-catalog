@@ -4,12 +4,21 @@
 
 	<div class="row padding-top padding-bottom">
 		<div class="col-sm-1"></div>
-		<div class="col-sm-10 padding-none">
+		<div class="col-sm-2 padding-none">
 			<a href="{{url_for('newCategory')}}">
 				<button class="btn btn-default" id="new-category">
-					<span class="glyphicon glyphicon-cutlery" aria-hidden="true"></span>Add Category
+					<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>Add Category
 				</button>
 			</a>
+		</div>
+		<div class="col-sm-7 padding-none">
+		    <str>LATEST ADDITIONS:</str><br>
+		    {% for i in latest %}
+		        <a href = "{{url_for('showItemDetail', category_id=i[3], item_id=i[0])}}">
+		            {{i[1]}}
+		        </a>
+		        ({{i[2]}})
+		    {% endfor %}
 		</div>
 		<div class="col-sm-1"></div>
 	</div>

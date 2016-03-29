@@ -288,13 +288,14 @@ def categoriesJSON():
 def showCategories():
     categories = session.query(Category).order_by(asc(Category.name))
     print "Category Login Session Object: ", login_session
+    latest = getLatestThree()
     # show the public template if not logged in (no add category option)
     if 'username' not in login_session:
         return render_template('publiccategories.html', categories=categories,
-                               page_title="Categories")
+                               page_title="Categories", latest = latest)
     else:
         return render_template('categories.html', categories=categories,
-                               page_title="Categories")
+                               page_title="Categories", latest = latest)
 
 
 # Create a new category
@@ -568,6 +569,16 @@ def getAge(bday):
                 - ((today.month, today.day)< (bday.month, bday.day)))
     except:
         return "TBD"
+
+
+def getLatestThree():
+    print "****getlatest****"
+    latest = (session.query(Item.id, Item.name, Category.name, Category.id)
+        .join(Category)
+        .order_by(Item.id.desc()).limit(3).all())
+    for i in latest:
+        print "i: ", i
+    return latest
 
 
 if __name__ == '__main__':
