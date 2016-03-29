@@ -392,12 +392,15 @@ def showItemDetail(category_id, item_id):
     # CHORE: is it more efficient to just load all names/flags globally once?
     countries = getCountryInfo([item.country_id])
     age = getAge(item.birthdate)
-    creator = getUserInfo(category.user_id)
+    creator = getUserInfo(item.user_id)
     # we use get here since it returns null vs an exception if
     # login_session is empty
     if login_session.get("user_id") == creator.id:
         return render_template('item_detail.html', item=item, category=category,
                                creator=creator, countries=countries, age=age)
+    elif category.id != item.category_id:
+        flash('No such item in that category')
+        return redirect(url_for('showCategories'))
     else:
         return render_template('publicitemdetail.html', item=item,
                                category=category, creator=creator,
