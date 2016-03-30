@@ -2,6 +2,8 @@ import datetime
 from functools import wraps
 from flask import Flask, render_template, request, redirect, jsonify
 from flask import url_for, flash
+# this is csrf security extension
+from flask.ext.seasurf import SeaSurf
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, Category, Item, Country, User
@@ -25,6 +27,8 @@ from flask import make_response
 # Apache urlrequests library - basically an improved urllib2
 import requests
 app = Flask(__name__)
+# this uses the csrf security extension SeaSurf with app
+csrf = SeaSurf(app)
 CLIENT_ID = json.loads(
                 open('client_secret.json', 'r').read())['web']['client_id']
 # Connect to Database and create database session
@@ -69,6 +73,13 @@ def item_auth_required(f):
         return f(category_id, item_to_work_on)
     return decorated_function
 
+
+# this exempts this route from SeaSurf CSRF protection
+# is it accurate that pre-login CSRF protection not needed since
+# we can't take any protected actions until post login?  We are
+# still doing verification of state token between client & server
+# see https://discussions.udacity.com/t/p3-extracredt-seasurf/28739/16
+@csrf.exempt
 # verify client response token matches state token sent to client
 # to avoid CSRF - gconnect is the post url we defined in the AJAX within
 # our login template - could have called it something else
@@ -165,6 +176,12 @@ def gconnect():
     return output
 
 
+# this exempts this route from SeaSurf CSRF protection
+# is it accurate that pre-login CSRF protection not needed since
+# we can't take any protected actions until post login?  We are
+# still doing verification of state token between client & server
+# see https://discussions.udacity.com/t/p3-extracredt-seasurf/28739/16
+@csrf.exempt
 @app.route('/fbconnect', methods=['POST'])
 def fbconnect():
     if request.args.get('state') != login_session['state']:
