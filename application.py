@@ -26,6 +26,10 @@ import json
 from flask import make_response
 # Apache urlrequests library - basically an improved urllib2
 import requests
+# python XML tree api & minidom to allow XML pretty printing
+import xml.etree.ElementTree as ET
+from xml.sax.saxutils import escape
+
 app = Flask(__name__)
 # this uses the csrf security extension SeaSurf with app
 csrf = SeaSurf(app)
@@ -316,8 +320,9 @@ def showLogin():
 
 
 # JSON APIs to view Category Information
+@app.route('/category/<int:category_id>/JSON')
 @app.route('/category/<int:category_id>/item/JSON')
-def catalogJSON(category_id):
+def categoryJSON(category_id):
     category = session.query(Category).filter_by(id=category_id).one()
     items = session.query(Item).filter_by(category_id=category_id).all()
     return jsonify(Items=[i.serialize for i in items])
@@ -333,6 +338,55 @@ def itemJSON(category_id, item_id):
 def categoriesJSON():
     categories = session.query(Category).all()
     return jsonify(categories=[r.serialize for r in categories])
+
+
+# XML endpoints
+@app.route('/category/XML')
+def categoriesXML():
+    top = ET.Element('top')
+    top.text = "Catalog Categories"
+    categories = session.query(Category).all()
+    for c in categories:
+        category = ET.SubElement(top, 'category')
+        dict = c.serialize
+        for k in c.serialize:
+            subelement = ET.SubElement(category, k)
+            subelement.text = str(dict[k])
+        xml = escape("<?xml version='1.0'?>" + ET.tostring(top, 'utf-8'))
+    return xml
+
+
+@app.route('/category/<int:category_id>/item/<int:item_id>/XML')
+def itemXML(category_id, item_id):
+    top = ET.Element('top')
+    top.text = "Item Detail"
+    item = session.query(Item).filter_by(id=item_id).one()
+    i = ET.SubElement(top, 'item')
+    dict = item.serialize
+    for k in dict:
+        subelement = ET.SubElement(i, k)
+        subelement.text = str(dict[k])
+    xml = escape("<?xml version='1.0'?>" + ET.tostring(top, 'utf-8'))
+    return xml
+
+
+@app.route('/category/<int:category_id>/XML')
+@app.route('/category/<int:category_id>/item/XML')
+def categoryXML(category_id):
+    top = ET.Element('top')
+    top.text = "Category items"
+    category = session.query(Category).filter_by(id=category_id).one()
+    cat = ET.SubElement(top, 'category')
+    cat_name = ET.SubElement(cat, 'name')
+    cat_name.text = category.name
+    for item in category.items:
+        i = ET.SubElement(top, 'item')
+        dict = item.serialize
+        for k in dict:
+            subelement = ET.SubElement(i, k)
+            subelement.text = str(dict[k])
+        xml = escape("<?xml version='1.0'?>" + ET.tostring(top, 'utf-8'))
+    return xml
 
 
 # Show all categories

@@ -1,6 +1,6 @@
 # [Catalog Project](https://www.udacity.com/course/viewer#!/c-ud197-nd/l-3521918727/m-3519689284)
 
-This project is a python module using SQLAlchemy as the ORM with a PostgreSQL database which creates a simple catalog app with categories and items.  It incorporates 3rd party authentication with Google and Facebook and each category uses authorization to allow only the category creator to edit the category and add items.  The SeaSurf extension is used for CSRF protection.  For this project, I chose to make the catalog categories sports and the items players.  The site uses a basic responsive grid & components from Bootstrap.  JSON endpoint are provided for categories(sports), category items(players), and individual items(players).  The 3 most recently added players and their sports are displayed on the main page.  Graphics for each sport are from the Rio 2016 Olympics and player photos are from respective professional organizations or ESPN.  All graphics are for demonstration purposes only and are the property of their respective owners.
+This project is a python module using SQLAlchemy as the ORM with a PostgreSQL database which creates a simple catalog app with categories and items.  It incorporates 3rd party authentication with Google and Facebook and each category uses authorization to allow only the category creator to edit the category and add items.  The SeaSurf extension is used for CSRF protection.  For this project, I chose to make the catalog categories sports and the items players.  The site uses a basic responsive grid & components from Bootstrap.  JSON & XML endpoints are provided for categories(sports), category items(players), and individual items(players).  The 3 most recently added players and their sports are displayed on the main page.  Graphics for each sport are from the Rio 2016 Olympics and player photos are from respective professional organizations or ESPN.  All graphics are for demonstration purposes only and are the property of their respective owners.
 
 
 
@@ -67,11 +67,12 @@ Sports are the categories in the catalog as currently populated.  Each category 
 ##### Items(Players)
 Players are the items in the catalog as currently populated.  Each player has fields for a name, category(sport), country, birthdate, photo url, and description/bio.  5 countries are prepopulated in the database(no CRUD interface currently provided) along with their flags and are selected when adding or entering a player.  The players age is displayed based on the birthdate provided.  If the birthdate is not provided, TBD is shown for the age.
 
-##### JSON Endpoints
-JSON endpoint are provided for:
-* categories(sports): http://localhost:5000/category/JSON
-* category items(players): http://localhost:5000/category/#/item/JSON
-* individual items(players): http://localhost:5000/category/#/item/#/JSON
+##### JSON & XML Endpoints
+JSON & XML endpoints are provided for:
+* categories(sports): http://localhost:5000/category/JSON or XML
+* category items(players): http://localhost:5000/category/#/item/JSON or XML
+* individual items(players): http://localhost:5000/category/#/item/#/JSON or XML
+modify the last element of the url accordingly for JSON or XML
 
 ## Contributing
 
