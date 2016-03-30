@@ -324,6 +324,11 @@ def categoriesJSON():
 def showCategories():
     categories = session.query(Category).order_by(asc(Category.name))
     #print "Category Login Session Object: ", login_session
+    # HOLY COW BATMAN - I SHOULD HAVE BEEN USING BI-DIRECTIONAL RELATIONSHIPS
+    for i in categories:
+        print i.user.name
+        for j in i.items:
+            print j.name, j.country.flag
     latest = getLatestThree()
     # show the public template if not logged in (no add category option)
     if 'username' not in login_session:
