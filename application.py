@@ -1,4 +1,5 @@
 import datetime
+from functools import wraps
 from flask import Flask, render_template, request, redirect, jsonify
 from flask import url_for, flash
 from sqlalchemy import create_engine, asc
@@ -32,6 +33,41 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # redirect if not logged in
+        if 'username' not in login_session:
+            flash('You must be logged in for this operation')
+            return redirect(url_for('showLogin'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def category_auth_required(f):
+    @wraps(f)
+    def decorated_function(category_id):
+        # redirect to main page & flash unauthorized if user is not creator
+#        category = session.query(Category).filter_by(id=category_id).one()
+        category_to_work_on = session.query(Category).filter_by(id=category_id).one()
+        # redirect to main page & flash unauthorized if user is not creator
+        if not user_authorized(category_to_work_on.user_id, "delete"):
+            return redirect(url_for('showCategories'))
+        return f(category_to_work_on)
+    return decorated_function
+
+
+def item_auth_required(f):
+    @wraps(f)
+    def decorated_function(category_id, item_id):
+        # redirect to main page & flash unauthorized if user is not creator
+#        category = session.query(Category).filter_by(id=category_id).one()
+        item_to_work_on = session.query(Item).filter_by(id=item_id).one()
+        if not user_authorized(item_to_work_on.user_id, "delete"):
+            return redirect(url_for('showCategories'))
+        return f(category_id, item_to_work_on)
+    return decorated_function
 
 # verify client response token matches state token sent to client
 # to avoid CSRF - gconnect is the post url we defined in the AJAX within
@@ -300,10 +336,11 @@ def showCategories():
 
 # Create a new category
 @app.route('/category/new/', methods=['GET', 'POST'])
+@login_required
 def newCategory():
     # redirect if not logged in
-    if 'username' not in login_session:
-        return redirect(url_for('showLogin'))
+#     if 'username' not in login_session:
+#         return redirect(url_for('showLogin'))
     if request.method == 'POST':
         newCategory = Category(name=request.form['name'],
                                icon=request.form['icon'],
@@ -318,43 +355,47 @@ def newCategory():
 
 # Edit a category
 @app.route('/category/<int:category_id>/edit/', methods=['GET', 'POST'])
-def editCategory(category_id):
-    # redirect if not logged in
-    if 'username' not in login_session:
-        return redirect(url_for('showLogin'))
-    editedCategory = session.query(Category).filter_by(id=category_id).one()
-    # redirect to main page & flash unauthorized if user is not creator
-    if not user_authorized(editedCategory.user_id, "edit"):
-        return redirect(url_for('showCategories'))
+@login_required
+@category_auth_required
+def editCategory(category):
+# redirect if not logged in
+#     if 'username' not in login_session:
+#         return redirect(url_for('showLogin'))
+#     editedCategory = session.query(Category).filter_by(id=category_id).one()
+# redirect to main page & flash unauthorized if user is not creator
+#     if not user_authorized(editedCategory.user_id, "edit"):
+#         return redirect(url_for('showCategories'))
     if request.method == 'POST':
         if request.form['name']:
-            editedCategory.name = request.form['name']
+            category.name = request.form['name']
         if request.form['icon']:
-            editedCategory.icon = request.form['icon']
-        flash('Category Successfully Edited %s' % editedCategory.name)
+            category.icon = request.form['icon']
+        flash('Category Successfully Edited %s' % category.name)
         return redirect(url_for('showCategories'))
     else:
-        return render_template('editCategory.html', category=editedCategory,
+        return render_template('editCategory.html', category=category,
                                page_title="Edit Category")
 
 
 # Delete a category
 @app.route('/category/<int:category_id>/delete/', methods=['GET', 'POST'])
-def deleteCategory(category_id):
+@login_required
+@category_auth_required
+def deleteCategory(category):
     # redirect if not logged in
-    if 'username' not in login_session:
-        return redirect(url_for('showLogin'))
-    categoryToDelete = session.query(Category).filter_by(id=category_id).one()
-    # redirect to main page & flash unauthorized if user is not creator
-    if not user_authorized(categoryToDelete.user_id, "delete"):
-        return redirect(url_for('showCategories'))
+#     if 'username' not in login_session:
+#         return redirect(url_for('showLogin'))
+#     categoryToDelete = session.query(Category).filter_by(id=categoryid).one()
+#     # redirect to main page & flash unauthorized if user is not creator
+#     if not user_authorized(categoryToDelete.user_id, "delete"):
+#         return redirect(url_for('showCategories'))
     if request.method == 'POST':
-        session.delete(categoryToDelete)
-        flash('%s Successfully Deleted' % categoryToDelete.name)
+        session.delete(category)
+        flash('%s Successfully Deleted' % category.name)
         session.commit()
-        return redirect(url_for('showCategories', category_id=category_id))
+        return redirect(url_for('showCategories', category_id=category.id))
     else:
-        return render_template('deleteCategory.html', category=categoryToDelete,
+        return render_template('deleteCategory.html', category=category,
                                page_title="Delete Category")
 
 
@@ -363,6 +404,7 @@ def deleteCategory(category_id):
 @app.route('/category/<int:category_id>/item/')
 def showItem(category_id):
     # print "Item Login Session Object: ", login_session
+    print "***IN SHOWITEM***"
     countries = {}
     category = session.query(Category).filter_by(id=category_id).one()
     items = session.query(Item).filter_by(category_id=category_id).all()
@@ -409,14 +451,9 @@ def showItemDetail(category_id, item_id):
 
 # Create a new item
 @app.route('/category/<int:category_id>/item/new/', methods=['GET', 'POST'])
-def newItem(category_id):
-    # redirect if not logged in
-    if 'username' not in login_session:
-        return redirect(url_for('showLogin'))
-    category = session.query(Category).filter_by(id=category_id).one()
-    # redirect to main page & flash unauthorized if user is not creator
-    if not user_authorized(category.user_id, "create items"):
-        return redirect(url_for('showCategories'))
+@login_required
+@category_auth_required
+def newItem(category):
     if request.method == 'POST':
         bday = request.form['birthdate']
         if bday:
@@ -426,7 +463,7 @@ def newItem(category_id):
                            sex=request.form['sex'],
                            photo=request.form['photo'],
                            country_id=request.form['country_id'],
-                           category_id=category_id, birthdate=bday,
+                           category_id=category.id, birthdate=bday,
                            user_id=login_session['user_id'])
         else:
             newItem = Item(name=request.form['name'],
@@ -434,14 +471,14 @@ def newItem(category_id):
                            sex=request.form['sex'],
                            photo=request.form['photo'],
                            country_id=request.form['country_id'],
-                           category_id=category_id,
+                           category_id=category.id,
                            user_id=login_session['user_id'])
             session.add(newItem)
             session.commit()
             flash('New Item %s Item Successfully Created' % (newItem.name))
-            return redirect(url_for('showItem', category_id=category_id))
+            return redirect(url_for('showItem', category_id=category.id))
     else:
-        return render_template('newitem.html', category_id=category_id,
+        return render_template('newitem.html', category_id=category.id,
                                countries=getCountryInfo(),
                                page_title="Add An Item")
 
@@ -449,15 +486,9 @@ def newItem(category_id):
 # Edit an item
 @app.route('/category/<int:category_id>/item/<int:item_id>/edit',
            methods=['GET', 'POST'])
-def editItem(category_id, item_id):
-    # redirect if not logged in
-    if 'username' not in login_session:
-        return redirect(url_for('showLogin'))
-    editedItem = session.query(Item).filter_by(id=item_id).one()
-    category = session.query(Category).filter_by(id=category_id).one()
-    # redirect to main page & flash unauthorized if user is not creator
-    if not user_authorized(category.user_id, "edit"):
-        return redirect(url_for('showCategories'))
+@login_required
+@item_auth_required
+def editItem(category_id, editedItem):
     if request.method == 'POST':
         if request.form['name']:
             editedItem.name = request.form['name']
@@ -469,23 +500,25 @@ def editItem(category_id, item_id):
             editedItem.country_id = request.form['country_id']
         if request.form['sex']:
             editedItem.sex = request.form['sex']
-        if request.form['birthdate']:
+        if request.form['birthdate'] and request.form['birthdate'] != "None":
             try:
                 editedItem.birthdate = datetime.datetime.strptime(
                     request.form['birthdate'], "%Y-%m-%d").date()
             except ValueError:
+                print "Birthdate type: ", type(request.form['birthdate'])
                 flash('Incorrect date format.  Please use the requested format')
                 return render_template('edititem.html', category_id=category_id,
-                                       item_id=item_id, item=editedItem,
+                                       item=editedItem,
                                        countries=getCountryInfo(),
                                        page_title="Edit Item")
+
         session.add(editedItem)
         session.commit()
         flash('Item Successfully Edited')
         return redirect(url_for('showItem', category_id=category_id))
     else:
         return render_template('edititem.html', category_id=category_id,
-                               item_id=item_id, item=editedItem,
+                               item=editedItem,
                                countries=getCountryInfo(),
                                page_title="Edit Item")
 
@@ -493,23 +526,17 @@ def editItem(category_id, item_id):
 # Delete an item
 @app.route('/category/<int:category_id>/item/<int:item_id>/delete',
            methods=['GET', 'POST'])
-def deleteItem(category_id, item_id):
-    # redirect if not logged in
-    if 'username' not in login_session:
-        return redirect(url_for('showLogin'))
-    category = session.query(Category).filter_by(id=category_id).one()
-    itemToDelete = session.query(Item).filter_by(id=item_id).one()
-    # redirect to main page & flash unauthorized if user is not creator
-    if not user_authorized(category.user_id, "delete"):
-        return redirect(url_for('showCategories'))
+@login_required
+@item_auth_required
+def deleteItem(category_id, item):
     if request.method == 'POST':
-        session.delete(itemToDelete)
+        session.delete(item)
         session.commit()
         flash('Item Successfully Deleted')
         return redirect(url_for('showItem', category_id=category_id))
     else:
         return render_template('deleteItem.html', category_id=category_id,
-                               item=itemToDelete, page_title="Delete Item")
+                               item=item, page_title="Delete Item")
 
 
 def getUserID(email):
@@ -578,6 +605,8 @@ def getLatestThree():
         .order_by(Item.id.desc()).limit(3).all())
     return latest
 
+
+            
 
 if __name__ == '__main__':
     app.secret_key = 'super_secret_key'

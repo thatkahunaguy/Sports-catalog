@@ -13,16 +13,16 @@
 				<h2>Men</h2>
 					{% for i in items %}
 					    {% if i.sex == 'Male' %}
+<!-- 
 							<a href='{{url_for('showItemDetail', category_id = category.id, item_id=i.id ) }}'>
 							<div class = "item">
 							    <img src="{{ countries[i.country_id].flag }}">
 							    <span class = "item-name">{{ i.name }}</span>
 							</a>
 							<br>
-							<a href='{{url_for('editItem', category_id = category.id, item_id=i.id ) }}'>Edit</a> | 
-							<a href='{{url_for('deleteItem', category_id = category.id, item_id=i.id ) }}'>Delete</a>
 							</div>
-							
+ -->
+						 {% include "item_detail_partial.html" %}	
 						 {% endif %}
 					{% endfor %}
 			</div>
@@ -31,6 +31,7 @@
 				<h2>Women</h2>
 					{% for i in items %}
 						{% if i.sex == 'Female' %}
+<!-- 
 							<a href='{{url_for('showItemDetail', category_id = category.id, item_id=i.id ) }}'>
 							<div class = "item">
 							    <img src="{{ countries[i.country_id].flag }}">
@@ -38,6 +39,8 @@
 							</a>
 							<br>
 							</div>
+ -->
+						{% include "item_detail_partial.html" %}
 						{% endif %}
 					{% endfor %}
 			</div>

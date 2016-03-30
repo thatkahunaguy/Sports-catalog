@@ -22,7 +22,7 @@ class Category(Base):
     user_id = Column(Integer,ForeignKey('user.id'))
     user = relationship(User)
     icon = Column(String(250))
-
+# need to find a way to cascade delete Category to child items , cascade="save-update, merge, delete"
     @property
     def serialize(self):
        """Return object data in easily serializeable format"""
@@ -64,7 +64,7 @@ class Item(Base):
     birthdate = Column(Date)
     photo = Column(String(250))
     category_id = Column(Integer,ForeignKey('category.id'))
-    category = relationship(Category, cascade="save-update, merge, delete")
+    category = relationship(Category)
     user_id = Column(Integer,ForeignKey('user.id'))
     user = relationship(User)
 
