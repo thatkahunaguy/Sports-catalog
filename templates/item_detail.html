@@ -2,6 +2,7 @@
 {% block content %}
 {% include "header.html" %}
 	<div class="row padding-top padding-bottom">
+	{% if auth %}
 		<div class="col-sm-1"></div>
 		<div class="col-sm-11 padding-none">			
 			<a href="{{url_for('editItem', category_id = category.id, item_id = item.id )}}">
@@ -22,6 +23,7 @@
 			</a>
 		</div>
 		<div class="col-sm-7"></div>
+	{% endif %}
 	</div>
 	
 	{% if item !=[] %}	
@@ -35,8 +37,8 @@
                         </figure>
                         <div class="player">{{item.name}}</div>
                         <figure class="player-flag">
-                            <img src="{{ countries[item.country_id].flag }}">
-                            <figcaption>{{ countries[item.country_id].name }}</figcaption>
+                            <img src="{{ item.country.flag }}">
+                            <figcaption>{{ item.country.name }}</figcaption>
                         </figure>
                         <div class ="player-age-label">Age</div>
                         <div class ="player-age">
@@ -47,8 +49,7 @@
                         <div class="player-description">
                             <p>{{item.description}}</p>
                         </div>
-                        <a href='{{url_for('editItem', category_id = category.id, item_id=item.id ) }}'>Edit</a> | 
-                        <a href='{{url_for('deleteItem', category_id = category.id, item_id=item.id ) }}'>Delete</a>                                             
+                        {% include "edit_delete_link_partial.html" %}
                     </div>
 			</div>
 			<div class="col-sm-1"></div>

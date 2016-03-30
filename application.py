@@ -324,19 +324,14 @@ def categoriesJSON():
 def showCategories():
     categories = session.query(Category).order_by(asc(Category.name))
     #print "Category Login Session Object: ", login_session
-    # HOLY COW BATMAN - I SHOULD HAVE BEEN USING BI-DIRECTIONAL RELATIONSHIPS
-    for i in categories:
-        print i.user.name
-        for j in i.items:
-            print j.name, j.country.flag
     latest = getLatestThree()
     # show the public template if not logged in (no add category option)
     if 'username' not in login_session:
-        return render_template('publiccategories.html', categories=categories,
-                               page_title="Categories", latest = latest)
+        return render_template('categories.html', auth=False, latest=latest,
+                               page_title="Categories", categories=categories)
     else:
-        return render_template('categories.html', categories=categories,
-                               page_title="Categories", latest = latest)
+        return render_template('categories.html', auth=True, latest=latest,
+                               page_title="Categories", categories=categories)
 
 
 # Create a new category
@@ -409,49 +404,38 @@ def deleteCategory(category):
 @app.route('/category/<int:category_id>/item/')
 def showItem(category_id):
     # print "Item Login Session Object: ", login_session
-    print "***IN SHOWITEM***"
-    countries = {}
     category = session.query(Category).filter_by(id=category_id).one()
-    items = session.query(Item).filter_by(category_id=category_id).all()
-    country_ids = set([item.country_id for item in items])
-    # build a dictionary of needed country names & flags
-    # CHORE: is it more efficient to just load all names/flags globally once?
-    countries = getCountryInfo(country_ids)
-    creator = getUserInfo(category.user_id)
+    creator = category.user
     # we use get here since it returns null vs an exception if
     # login_session is empty
     if login_session.get("user_id") == creator.id:
-        return render_template('item.html', items=items, category=category,
-                               creator=creator, countries=countries)
+        return render_template('item.html', auth=True, category=category,
+                               creator=creator)
     else:
-        return render_template('publicitem.html', items=items,
-                               category=category, creator=creator,
-                               countries=countries)
+        return render_template('item.html', auth=False,
+                               category=category, creator=creator)
+
 
 
 @app.route('/category/<int:category_id>/item/<int:item_id>')
 def showItemDetail(category_id, item_id):
     # print "Item Login Session Object: ", login_session
-    countries = {}
-    category = session.query(Category).filter_by(id=category_id).one()
     item = session.query(Item).filter_by(id=item_id).one()
-    # build a dictionary of needed country names & flags
-    # CHORE: is it more efficient to just load all names/flags globally once?
-    countries = getCountryInfo([item.country_id])
     age = getAge(item.birthdate)
-    creator = getUserInfo(item.user_id)
+    creator = item.category.user
+    # redirect if user manually entered incorrect category/item url
+    if category_id != item.category.id:
+        flash('No such item in that category')
+        return redirect(url_for('showCategories'))
     # we use get here since it returns null vs an exception if
     # login_session is empty
     if login_session.get("user_id") == creator.id:
-        return render_template('item_detail.html', item=item, category=category,
-                               creator=creator, countries=countries, age=age)
-    elif category.id != item.category_id:
-        flash('No such item in that category')
-        return redirect(url_for('showCategories'))
+        return render_template('item_detail.html', item=item, auth = True,
+                               category=item.category, creator=creator, age=age)    
     else:
-        return render_template('publicitemdetail.html', item=item,
-                               category=category, creator=creator,
-                               countries=countries, age=age)
+        return render_template('item_detail.html', item=item, auth = False,
+                               category=item.category, creator=creator, age=age)
+
 
 
 # Create a new item
@@ -510,7 +494,7 @@ def editItem(category_id, editedItem):
                 editedItem.birthdate = datetime.datetime.strptime(
                     request.form['birthdate'], "%Y-%m-%d").date()
             except ValueError:
-                print "Birthdate type: ", type(request.form['birthdate'])
+                # print "Birthdate type: ", type(request.form['birthdate'])
                 flash('Incorrect date format.  Please use the requested format')
                 return render_template('edititem.html', category_id=category_id,
                                        item=editedItem,
@@ -561,12 +545,6 @@ def createUser(login_session):
     session.commit()
     return getUserID(login_session['email'])
 
-
-def getUserInfo(user_id):
-    # return the user object given a user_id
-    # do we need a try block here in case user_id isn't in the database?
-    user = session.query(User).filter_by(id=user_id).one()
-    return user
 
 
 def user_authorized(id_to_check_against, text):

@@ -3,6 +3,7 @@
 {% include "header.html" %}
 
 	<div class="row padding-top padding-bottom">
+	{% if auth %}	
 		<div class="col-sm-1"></div>
 		<div class="col-sm-11 padding-none">
 			<a href="{{url_for('editCategory', category_id = category.id )}}">
@@ -22,24 +23,19 @@
 			</a>
 		</div>
 		<div class="col-sm-7"></div>
+	{% endif %}
 	</div>
 	
-	{% if items !=[] %}	
+	{% if category.items !=[] %}	
 		<div class="row">
 			<div class="col-sm-1"></div>
 			<div class="col-sm-5">
 				<div class="row divider blue"></div>
 				<h2>Men</h2>
-					{% for i in items %}
-					    {% if i.sex == 'Male' %}
-							<a href='{{url_for('showItemDetail', category_id = category.id, item_id=i.id ) }}'>
-							<div class = "item">
-							    <img src="{{ countries[i.country_id].flag }}">
-							    <span class = "item-name">{{ i.name }}</span>
-							</a>
-							<br>
-							<a href='{{url_for('editItem', category_id = category.id, item_id=i.id ) }}'>Edit</a> | 
-							<a href='{{url_for('deleteItem', category_id = category.id, item_id=i.id ) }}'>Delete</a>
+					{% for item in category.items %}
+					    {% if item.sex == 'Male' %}
+							{% include "item_detail_partial.html" %}
+                            {% include "edit_delete_link_partial.html" %}
 							</div>
 							
 						 {% endif %}
@@ -48,16 +44,10 @@
 			<div class="col-sm-5">			
 				<div class="row divider blue"></div>
 				<h2>Women</h2>
-					{% for i in items %}
-						{% if i.sex == 'Female' %}
-							<a href='{{url_for('showItemDetail', category_id = category.id, item_id=i.id ) }}'>
-							<div class = "item">
-							    <img src="{{ countries[i.country_id].flag }}">
-							    <span class = "item-name">{{ i.name }}</span>
-							</a>
-							<br>
-							<a href='{{url_for('editItem', category_id = category.id, item_id=i.id ) }}'>Edit</a> | 
-							<a href='{{url_for('deleteItem', category_id = category.id, item_id=i.id ) }}'>Delete</a>
+					{% for item in category.items %}
+						{% if item.sex == 'Female' %}
+							{% include "item_detail_partial.html" %}
+                            {% include "edit_delete_link_partial.html" %}
 							</div>
 						{% endif %}
 					{% endfor %}

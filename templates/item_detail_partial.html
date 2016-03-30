@@ -1,7 +1,6 @@
-<a href='{{url_for('showItemDetail', category_id = category.id, item_id=i.id ) }}'>
+<a href='{{url_for('showItemDetail', category_id = category.id, item_id=item.id ) }}'>
 <div class = "item">
-    <img src="{{ countries[i.country_id].flag }}">
-    <span class = "item-name">{{ i.name }}</span>
+    <img src="{{ item.country.flag }}">
+    <span class = "item-name">{{ item.name }}</span>
 </a>
 <br>
-</div>

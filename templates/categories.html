@@ -5,11 +5,13 @@
 	<div class="row padding-top padding-bottom">
 		<div class="col-sm-1"></div>
 		<div class="col-sm-2 padding-none">
+		{% if auth %}
 			<a href="{{url_for('newCategory')}}">
 				<button class="btn btn-default" id="new-category">
 					<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>Add Category
 				</button>
 			</a>
+		{% endif %}
 		</div>
 		<div class="col-sm-7 padding-none">
 		    <str>LATEST ADDITIONS:</str><br>
@@ -20,7 +22,7 @@
 		        ({{i[2]}})
 		    {% endfor %}
 		</div>
-		<div class="col-sm-1"></div>
+		<div class="col-sm-1"></div>	
 	</div>
 	{% set count = 0 %}
 	{% for category in categories %}	
